@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Internal Employee Portal — Deployment Starter
 
 Spring Boot 3.5.0 / Java 21 / MyBatis / PostgreSQL. This is a **deployment starter**, not the completed assignment. Vue 3 will be added later.
@@ -30,3 +31,7 @@ mvn spring-boot:run
 **Security note:** `/api/health/db` is temporarily public and reveals only UP/DOWN. Restrict or remove it before final submission. Spring Security currently uses a generated development password; real account authentication and authorization are not yet implemented. Do not submit this starter as the final assignment.
 
 No credentials are included in this repository. Do not commit `.env` files or candidate API keys.
+=======
+# internal-employee-portal
+internal-employee-portal
+>>>>>>> origin/main
