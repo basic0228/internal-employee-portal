@@ -47,15 +47,29 @@ V5의 background_checks는 요청UUID·사번·요청 계정ID·조회시각·ch
 
 업무 API는 `/api/admin/**`로 ADMIN만 접근한다. POST 생성·갱신·연결은 CSRF를 요구한다. 일반 직원은 본인 대상이어도 이력·상세를 열람할 수 없다. 기존 외부 상세 GET도 저장 활성화 시 로컬 이력에 연결된 결과만 열람하고 계정을 기록한다.
 
-## 운영 적용 — V5·활성화 대기
+## 운영 적용 및 검증
 
 2026-10-12 `d143d79`까지 main 푸시 완료. 해당 커밋의 GitHub 상태에 Railway 배포 success가 보고됐고, 운영 페이지의 `/assets/index-Djmh5Ckm.js`가 로컬 검증 번들과 일치했다. `/api/health`와 `/api/health/db`는 각각 HTTP200/UP였다. 새 배포에서 로그인 세션은 만료되어 로그인 화면이 표시됐다. Railway 로그인 접근이 없어 V5 운영 실행·BG_RECORDING_ENABLED 설정 확인은 미수행이다. 이 정상 상태 확인을 업무 POST·이력 DB 검증으로 간주하지 않는다. 추가 외부 API 호출은 0건이다.
+
+후속으로 문서 커밋 `e197845`의 Railway 배포 success도 확인했다. 사용자는 BG_RECORDING_ENABLED=true 설정과 V5 생성 명령 실행 완료를 알렸다. 관리자 로그인 후 EMP-001·EMP-007 모달과 이력 목록을 확인했으며 모두0건, 화면 오류 메시지는 없었다. EMP-001의 기존 생년월일과 EMP-007의 생년월일 공란을 확인했고 성·이름을 자동 분리하지 않았다. 두 화면 모두 서버의 available=false로 신규 조회가 비활성화됐다. 이 응답만으로 기록 저장 활성화 여부나 V5 실제 사용을 확정하지 않는다. 앱 서비스의 BG_ENABLED/BG_EXTERNAL_ENABLED·서버 키 존재·timeout 범위·변수 반영 배포 확인이 남았다. 신규 POST·결과 갱신은 실행하지 않았고 외부 호출은0건이다.
+
+**최신 확인(2026-10-12):** 사용자가 앱 서비스 설정·배포 완료를 알린 뒤 재로그인했다. 이력 읽기가 성공하고 입력 후 신규 버튼이 활성화됐다. 기본 정책 유지와 최대26HTTP의 업무1건 검증을 승인받아 EMP-001을 실행했다. 실제 추가 호출은 POST1건·수동DETAIL GET1건·자동GET0건·재시도0건, 합계2건이다. POST가 즉시clear를 반환하여 pending 전환·자동 폴링 검증 표본으로 세지 않는다.
+
+| 운영 확인 | 실제 결과 |
+|---|---|
+| 업무 요청과 이력 | 요청 시각2026-10-11T22:12:40.487041Z, 계정admin, 대상EMP-001, 이력1건/특이사항 없음 |
+| 수동 상세 열람 | 상세 영역 표시와 최근 확인 시각2026-10-11T22:12:56.426871Z 확인 |
+| 열람 감사 기록 | admin/DETAIL/HTTP_RESPONSE, 열람 시각2026-10-11T22:12:56.431+00:00 표시 |
+| 다시 열기 | 같은 이력1건 유지, 상세 영역과 조회용 성·이름 입력 초기화 |
+| 비로그인 접근 | 세션 없이 관리자 이력 API 요청1건 → HTTP401 |
+
+상세 원문은 검증 문서에 복사하지 않았다. 이력 스키마·정상 저장/읽기/열람 경로를 확인했으며 운영 DB 전체 컬럼 내용이나 다른 PC에서의 조회를 직접 감사한 것은 아니다. USER 역할의 운영403, pending→최종·응답 유실 복구·오류 중단의 운영 검증은 남아 있다. 기존Lab39run/65시도의 원본·Excel·백분위수에는 이번 UI 검증2건을 합치지 않는다.
 
 1. V1/V3 테이블과 V5 미적용 여부를 확인한 뒤 [V5 SQL](../backend/src/main/resources/db/migration/V5__background_check_history.sql)을 트랜잭션으로 적용한다. 직원10명·계정을 삭제하거나 재초기화하지 않는다.
    로컬 PowerShell에서 `./scripts/prepare-background-v5.ps1`을 실행하면 `outputs/deploy/apply-background-v5.sh`가 생성된다. 파일 전체를 Railway **Postgres 서비스의 Console(bash)**에 붙여 넣는다. 이 명령은 기존 환경변수로 psql에 연결하며 비밀번호를 출력하지 않는다. V5 일부라도 이미 존재하면 중단하고, 직원·계정 건수가 유지되는지 검증한 뒤 COMMIT한다. 오류 또는 COMMIT 미확인 상태에서는 활성화하지 않는다. 생성기의 원본 SQL 포함·LF·비파괴 구문 검사와 생성 명령의 Bash 문법 검사는 통과했지만 운영 실행 성공을 뜻하지 않는다.
 2. V5 적용 후 Railway에 `BG_RECORDING_ENABLED=true`를 추가한다. 기본false는 새 SQL 없이 기존 배포를 유지하기 위한 보호다. 기존 BG_ENABLED/BG_EXTERNAL_ENABLED와 서버 X_CANDIDATE_KEY도 확인한다.
 3. 기존 timeout 환경변수가 있으면 기본값보다 우선한다. 아래 초기값으로 맞출지 운영 적용 전에 확인한다.
-4. main 푸시는 자동 배포다. 코드 배포와 공개 health 응답은 위 기록처럼 확인했다. 운영 SQL·환경변수 변경과 새 업무 외부 호출은 아직 미수행이다. 추가 외부 검증은 별도 확인한다.
+4. main 푸시는 자동 배포다. V5 SQL·앱 변수 변경·설정 배포는 사용자가 수행했고, AI는 위 정상 업무 흐름을 브라우저에서 검증했다. 추가 외부 검증은 별도 확인한다.
 
 ```yaml
 background-check:
@@ -71,4 +85,4 @@ background-check:
     polling-max-attempts: ${BG_POLLING_MAX_ATTEMPTS:24}
 ```
 
-검증 결과는 [SUBMISSION](SUBMISSION.md)에 기록한다. PostgreSQL·Railway의 새 업무 흐름과 실제 브라우저 동작은 아직 미검증이며 UI 빌드를 운영 확인으로 대체하지 않는다.
+검증 결과는 [SUBMISSION](SUBMISSION.md)에 기록한다. PostgreSQL·Railway의 정상 업무 흐름과 모의 테스트의 예외 경로를 구분하며 UI 빌드를 운영 확인으로 대체하지 않는다.
