@@ -50,6 +50,8 @@
 
 **업무 배경 조회 변경 검증(2026-10-12):** Java21/H2/루프백 모의 API로 최종 백엔드95개 통과. 신규 업무 이력13개와 공통 Client 서비스6개를 포함한다. 프론트는 기존Lab21개와 업무 상태2개, 총23개 통과. 관리자UI opt-in 빌드와 Spring Boot JAR 패키징 통과이며 번들 크기 경고가 남는다. 운영 PostgreSQL·배포 업무 화면·실제 브라우저 기능 확인은 미수행이다. 기존 실측 데이터와 통합 Excel은 변경하지 않았다.
 
+**후속 배포 확인(2026-10-12):** `d143d79` main 푸시·Railway success 상태·최신 UI 번들 일치와 공개 health/DB health HTTP200/UP를 확인했다. V5 운영 적용·저장 활성화와 관리자 업무 화면 검증은 로그인 접근 대기 중이다. 외부 API 추가 실측은0건이며 기존 통계 n을 변경하지 않았다. [운영 적용 절차와 상태](BACKGROUND_CHECK_POLICY.md#운영-적용--v5활성화-대기)를 참고한다.
+
 앞선 근거자료 통합과 이번 업무 구현에서 추가 외부 호출·운영DB·운영 환경변수 변경은0건이다. 원본 JSON·통합 Excel은 유지했다. 근거자료 통합 당시의 오프라인 감사와 이번 업무 기능의 모의 회귀 테스트를 구분한다.
 
 이전 기록은 [MEASUREMENTS_HISTORY](MEASUREMENTS_HISTORY.md), [AI_LOG_HISTORY](AI_LOG_HISTORY.md), [초기 조건별 근거](API_DECISION_EVIDENCE_INITIAL.md)에 보존했다. 역사적 TODO·실측0 서술은 당시 시점의 기록이며 최신 상태는 본 통합 문서가 우선한다.

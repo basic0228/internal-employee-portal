@@ -47,13 +47,15 @@ V5의 background_checks는 요청UUID·사번·요청 계정ID·조회시각·ch
 
 업무 API는 `/api/admin/**`로 ADMIN만 접근한다. POST 생성·갱신·연결은 CSRF를 요구한다. 일반 직원은 본인 대상이어도 이력·상세를 열람할 수 없다. 기존 외부 상세 GET도 저장 활성화 시 로컬 이력에 연결된 결과만 열람하고 계정을 기록한다.
 
-## 운영 적용 — 미수행
+## 운영 적용 — V5·활성화 대기
+
+2026-10-12 `d143d79`까지 main 푸시 완료. 해당 커밋의 GitHub 상태에 Railway 배포 success가 보고됐고, 운영 페이지의 `/assets/index-Djmh5Ckm.js`가 로컬 검증 번들과 일치했다. `/api/health`와 `/api/health/db`는 각각 HTTP200/UP였다. 새 배포에서 로그인 세션은 만료되어 로그인 화면이 표시됐다. Railway 로그인 접근이 없어 V5 운영 실행·BG_RECORDING_ENABLED 설정 확인은 미수행이다. 이 정상 상태 확인을 업무 POST·이력 DB 검증으로 간주하지 않는다. 추가 외부 API 호출은 0건이다.
 
 1. V1/V3 테이블과 V5 미적용 여부를 확인한 뒤 [V5 SQL](../backend/src/main/resources/db/migration/V5__background_check_history.sql)을 트랜잭션으로 적용한다. 직원10명·계정을 삭제하거나 재초기화하지 않는다.
-   로컬 PowerShell에서 `./scripts/prepare-background-v5.ps1`을 실행하면 `outputs/deploy/apply-background-v5.sh`가 생성된다. 파일 전체를 Railway **Postgres 서비스의 Console(bash)**에 붙여 넣는다. 이 명령은 기존 환경변수로 psql에 연결하며 비밀번호를 출력하지 않는다. V5 일부라도 이미 존재하면 중단하고, 직원·계정 건수가 유지되는지 검증한 뒤 COMMIT한다. 오류 또는 COMMIT 미확인 상태에서는 활성화하지 않는다. 생성기의 원본 SQL 포함·LF·비파괴 구문 검사는 통과했지만 운영 실행 성공을 뜻하지 않는다.
+   로컬 PowerShell에서 `./scripts/prepare-background-v5.ps1`을 실행하면 `outputs/deploy/apply-background-v5.sh`가 생성된다. 파일 전체를 Railway **Postgres 서비스의 Console(bash)**에 붙여 넣는다. 이 명령은 기존 환경변수로 psql에 연결하며 비밀번호를 출력하지 않는다. V5 일부라도 이미 존재하면 중단하고, 직원·계정 건수가 유지되는지 검증한 뒤 COMMIT한다. 오류 또는 COMMIT 미확인 상태에서는 활성화하지 않는다. 생성기의 원본 SQL 포함·LF·비파괴 구문 검사와 생성 명령의 Bash 문법 검사는 통과했지만 운영 실행 성공을 뜻하지 않는다.
 2. V5 적용 후 Railway에 `BG_RECORDING_ENABLED=true`를 추가한다. 기본false는 새 SQL 없이 기존 배포를 유지하기 위한 보호다. 기존 BG_ENABLED/BG_EXTERNAL_ENABLED와 서버 X_CANDIDATE_KEY도 확인한다.
 3. 기존 timeout 환경변수가 있으면 기본값보다 우선한다. 아래 초기값으로 맞출지 운영 적용 전에 확인한다.
-4. main 푸시는 자동 배포다. 이번 구현은 운영 SQL·환경변수·푸시·외부 호출을 수행하지 않았다. 추가 외부 검증은 별도 확인한다.
+4. main 푸시는 자동 배포다. 코드 배포와 공개 health 응답은 위 기록처럼 확인했다. 운영 SQL·환경변수 변경과 새 업무 외부 호출은 아직 미수행이다. 추가 외부 검증은 별도 확인한다.
 
 ```yaml
 background-check:
