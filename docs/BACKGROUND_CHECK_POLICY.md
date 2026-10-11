@@ -50,6 +50,7 @@ V5의 background_checks는 요청UUID·사번·요청 계정ID·조회시각·ch
 ## 운영 적용 — 미수행
 
 1. V1/V3 테이블과 V5 미적용 여부를 확인한 뒤 [V5 SQL](../backend/src/main/resources/db/migration/V5__background_check_history.sql)을 트랜잭션으로 적용한다. 직원10명·계정을 삭제하거나 재초기화하지 않는다.
+   로컬 PowerShell에서 `./scripts/prepare-background-v5.ps1`을 실행하면 `outputs/deploy/apply-background-v5.sh`가 생성된다. 파일 전체를 Railway **Postgres 서비스의 Console(bash)**에 붙여 넣는다. 이 명령은 기존 환경변수로 psql에 연결하며 비밀번호를 출력하지 않는다. V5 일부라도 이미 존재하면 중단하고, 직원·계정 건수가 유지되는지 검증한 뒤 COMMIT한다. 오류 또는 COMMIT 미확인 상태에서는 활성화하지 않는다. 생성기의 원본 SQL 포함·LF·비파괴 구문 검사는 통과했지만 운영 실행 성공을 뜻하지 않는다.
 2. V5 적용 후 Railway에 `BG_RECORDING_ENABLED=true`를 추가한다. 기본false는 새 SQL 없이 기존 배포를 유지하기 위한 보호다. 기존 BG_ENABLED/BG_EXTERNAL_ENABLED와 서버 X_CANDIDATE_KEY도 확인한다.
 3. 기존 timeout 환경변수가 있으면 기본값보다 우선한다. 아래 초기값으로 맞출지 운영 적용 전에 확인한다.
 4. main 푸시는 자동 배포다. 이번 구현은 운영 SQL·환경변수·푸시·외부 호출을 수행하지 않았다. 추가 외부 검증은 별도 확인한다.
