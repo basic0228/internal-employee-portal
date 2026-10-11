@@ -1,0 +1,95 @@
+{
+  "phaseId": "followup-remaining-20261012",
+  "actualHttp": 2,
+  "actualPost": 0,
+  "totalActualHttp": 13,
+  "totalActualPost": 2,
+  "remainingHttp": 117,
+  "remainingPost": 2,
+  "cohorts": [
+    {
+      "runId": "c4e7adbc-a862-4e9a-911f-fd4821d87ec7",
+      "protocol": {
+        "family": "R02",
+        "variant": "DEFAULT",
+        "block": 0,
+        "order": 0
+      },
+      "revision": "2659aa776ed8a2750c3a1ca83abe6a1c003c8003",
+      "cohort": "LIST/HTTP_RESPONSE/503",
+      "metric": "completed_http_ms",
+      "latency": {
+        "n": 1,
+        "mean": 1481.397284,
+        "p50": 1481.397284,
+        "p95": 1481.397284,
+        "p99": 1481.397284,
+        "max": 1481.397284,
+        "meanMedianGap": 0,
+        "p95Ratio": 1,
+        "maxRatio": 1,
+        "outliers": [],
+        "tailRanks": [
+          1,
+          1
+        ],
+        "tailValues": [
+          1481.397284,
+          1481.397284
+        ]
+      }
+    },
+    {
+      "runId": "c4e7adbc-a862-4e9a-911f-fd4821d87ec7",
+      "protocol": {
+        "family": "R02",
+        "variant": "DEFAULT",
+        "block": 0,
+        "order": 0
+      },
+      "revision": "2659aa776ed8a2750c3a1ca83abe6a1c003c8003",
+      "cohort": "LIST/HTTP_RESPONSE/500",
+      "metric": "completed_http_ms",
+      "latency": {
+        "n": 1,
+        "mean": 652.601091,
+        "p50": 652.601091,
+        "p95": 652.601091,
+        "p99": 652.601091,
+        "max": 652.601091,
+        "meanMedianGap": 0,
+        "p95Ratio": 1,
+        "maxRatio": 1,
+        "outliers": [],
+        "tailRanks": [
+          1,
+          1
+        ],
+        "tailValues": [
+          652.601091,
+          652.601091
+        ]
+      }
+    }
+  ],
+  "retries": [
+    {
+      "runId": "c4e7adbc-a862-4e9a-911f-fd4821d87ec7",
+      "n": 1,
+      "eligibleN": 1,
+      "followupN": 1,
+      "recoveredN": 0,
+      "deferredN": 0,
+      "recoveryPercent": 0,
+      "retryCalls": 1
+    }
+  ],
+  "workflows": [],
+  "hashes": [
+    {
+      "runId": "c4e7adbc-a862-4e9a-911f-fd4821d87ec7",
+      "sha256": "369f520025058c25846fc5b337ef0925a45277de4f8af4c0b258ffd2321f06c7"
+    }
+  ],
+  "limitation": "Error-dependent stopping and unequal cohorts; no causal recovery estimate or fabricated unstarted observations"
+}

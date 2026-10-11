@@ -1,0 +1,42 @@
+{
+  "phaseId": "followup-remaining-20261012",
+  "parentSuiteId": "followup-seed-20261012-d19050c7",
+  "source": "EXTERNAL",
+  "approvedHttpCeiling": 130,
+  "approvedPostCeiling": 4,
+  "priorActualHttp": 11,
+  "priorActualPost": 2,
+  "actualHttp": 2,
+  "actualPost": 0,
+  "status": "STOPPED_RECOVERY_NOT_CONFIRMED",
+  "runs": [
+    {
+      "runId": "c4e7adbc-a862-4e9a-911f-fd4821d87ec7",
+      "campaignId": "a104e056-cf53-4fe0-8bef-42ac38a1e6e6",
+      "family": "R02",
+      "state": "STOPPED",
+      "reason": "OBSERVED_ERROR",
+      "actualHttp": 2,
+      "actualPost": 0
+    }
+  ],
+  "omissions": [
+    {
+      "family": "T01",
+      "reason": "Normal readiness and valid terminal target not yet established"
+    },
+    {
+      "family": "R01/R03/R04",
+      "reason": "Phase stopped after failed R02 recovery check; no further procedure started"
+    },
+    {
+      "family": "P01/P02/P04",
+      "reason": "Recovery not confirmed; no new POST or polling started"
+    },
+    {
+      "family": "C01/C02/C03",
+      "reason": "Recovery not confirmed; no concurrency escalation"
+    }
+  ],
+  "privacy": "Credentials, targets and response bodies excluded; initial suite preserved separately"
+}
