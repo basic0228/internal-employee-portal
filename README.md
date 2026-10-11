@@ -15,16 +15,17 @@
 | 본인 조회·수정 | 본인 정보 조회, 이메일·전화번호만 수정 | 로컬 소유권·보호 필드·CSRF·저장 검증 |
 | 퇴사자 접근 | 신규 로그인과 기존 세션의 매 API 요청 재직 확인 | 로컬 세션·경로·오류 검증. 운영 퇴사 검증 TODO |
 | 필수 시드 | EMP-001~010, 동명이인 허용, EMP-007 생년월일NULL | SQL·로컬 검증, 배포 목록 |
-| 업무 배경 조회 | 모달 입력, 이력·상세 GET, 직원 소유 확인 | 코드·로컬. 운영 업무 화면 상세 성공 검증 TODO |
+| 업무 배경 조회 | 관리자 수동POST, DB 최소 이력, 결과 확인·열람 기록, 중복/결과 불명 제어 | H2·모의HTTP 검증. 신규 흐름의 PostgreSQL/Railway·브라우저 확인 TODO |
 | API Reliability Lab | 실험·통계·후속 절차·후보 비교·서버 자동 저장 | 배포 실측과 저장 원본 대조 |
 
-**과제 전체 완성은 아니다.** 관리자 수동 배경 조회와 최소 이력 보관 정책은 확정했지만 업무 POST·로컬 이력 저장은 미구현이다. 조회일시·계정·대상·특이사항 여부만 보관하고 상세 결과는 저장하지 않는다. 관리자만 열람하며 이력 삭제·만료는 없다. Lab의 실험 POST와 업무 실행을 구분한다. 운영 timeout·retry·polling 값과 초기 비밀번호 변경은 TODO다.
+**과제 전체 운영 검증은 미완료다.** 관리자 수동 배경 조회와 최소 이력 보관은 구현했고 V5 적용 후 별도 활성화한다. 조회일시·계정·대상·특이사항 여부 등 이력만 보관하며 상세 결과는 저장하지 않는다. 관리자만 열람하고 이력 삭제·만료는 없다. timeout/retry/polling은 보수적 초기값을 적용했으며 실측 최적값은 미확인이다. [설정과 한계](docs/BACKGROUND_CHECK_POLICY.md)를 참고한다. 초기 비밀번호 변경은 미구현이다.
 
 ## 제출 근거자료
 
 - [MEASUREMENTS](docs/MEASUREMENTS.md): 고유39실행/65시도, 상세 GET·상태 분포·중복 POST·미검증 구분
 - [설정 판단 근거](docs/API_DECISION_EVIDENCE.md): 통계·공학 모델, 후보·대안·재검토 상황
 - [DECISIONS](docs/DECISIONS.md): 사용자 확정 정책과 미확정 TODO
+- [업무 조회 정책](docs/BACKGROUND_CHECK_POLICY.md): 초기 설정, 실측 한계, 이력·중복·결과 불명·운영 적용
 - [AI_LOG](docs/AI_LOG.md): 실제 변경·오류 사례와 본인 설명 과제
 - [원본 인덱스](docs/measurements/integrated/INDEX.md): run ID·조건·원본 SHA256
 - [통합 Excel](docs/measurements/submission-evidence.xlsx): 조건별 통계·후보 계산·원본 관측
@@ -37,7 +38,7 @@
 - backend의 auth: 세션 principal, 요청별 계정·재직 검사
 - backend의 backgroundcheck/client: 업무와 Lab의 공통 외부 Client
 - backend의 lab: 예산·중단·후속 프로토콜·서버 저장
-- backend/src/main/resources/db/migration: V1~V4 SQL
+- backend/src/main/resources/db/migration: V1~V5 SQL
 - frontend/src/PortalApp.vue 및 components: 직원·관리자 화면, 조회 모달·Lab
 - frontend/src/lab: 통계와 후속 계획
 - scripts: 측정·시연·오프라인 감사·Excel 생성
@@ -64,15 +65,16 @@ http://localhost:5173 — **메모리 DB 전용** 계정 preview-admin / Preview
 ```powershell
 mvn -f backend/pom.xml test
 npm --prefix frontend run test:lab
+npm --prefix frontend run test:background
 $env:VITE_PORTAL_UI_ENABLED = 'true'
 npm --prefix frontend run build
 ```
 
-기록된 C03 검증은 백엔드79개 통과 후 마지막 순서 검사 변경을 포함한 관련19개 재검증 통과, 프론트21개·UI opt-in 빌드 통과다. 번들 크기 경고는 남아 있다. 이번 문서 통합에서 애플리케이션 테스트를 다시 실행하지 않았다. H2 검증은 운영 PostgreSQL 검증을 대체하지 않는다.
+기록된 C03 검증은 당시 백엔드79개와 관련19개 재검증, 프론트21개였다. 이후 업무 조회 변경 검증은 [SUBMISSION](docs/SUBMISSION.md)에 별도 기록한다. H2 검증과 UI 빌드는 운영 PostgreSQL·배포 브라우저 검증을 대체하지 않는다. 번들 크기 경고는 남아 있다.
 
 ## PostgreSQL와 배포
 
-SQL 자동 실행·Flyway는 도입하지 않았다. 기존 테이블과 적용 버전을 확인한 뒤 필요한 파일만 적용한다. V1 직원·계정, V2 필수 시드, V3 연락처, V4 lab_campaigns/lab_runs다. DROP/TRUNCATE·기존 비밀번호 초기화는 수행하지 않는다. 사용자가 운영 테이블을 수동 생성했고 이후 배포 Lab 저장을 확인했다. 전체 운영 스키마 재검증은 별도다.
+SQL 자동 실행·Flyway는 도입하지 않았다. 기존 테이블과 적용 버전을 확인한 뒤 필요한 파일만 적용한다. V1 직원·계정, V2 필수 시드, V3 연락처, V4 lab_campaigns/lab_runs, V5 background_checks/background_check_views다. DROP/TRUNCATE와 기존 비밀번호 초기화는 수행하지 않는다. 사용자가 기존 운영 테이블을 생성하고 Lab 저장을 확인한 기록과 별도로 V5는 아직 운영에 적용하지 않았다.
 
 Docker는 Vue 빌드→Maven/Java21→JRE21 통합 이미지다. VITE_PORTAL_UI_ENABLED는 빌드 플래그로 runtime 값만 바꿔서는 화면이 달라지지 않는다. 서버 새 기능은 portal-dev 프로필에서 활성화한다. 기본 플래그는 false이며 사용자 배포 설정과 구분한다. main 푸시는 Railway 자동 배포를 일으킬 수 있다.
 
@@ -82,9 +84,12 @@ Docker는 Vue 빌드→Maven/Java21→JRE21 통합 이미지다. VITE_PORTAL_UI_
 | PORTAL_ADMIN_USERNAME/PORTAL_ADMIN_PASSWORD | 최초 관리자 생성, 기존 비밀번호 덮어쓰지 않음 |
 | LAB_ENABLED/LAB_POST_ENABLED/LAB_RECORDING_ENABLED | Lab 실행·POST·서버 저장 |
 | BG_EXTERNAL_ENABLED | 외부 Client 실제 호출 허용 |
-| BG_ENABLED | 업무 화면 배경 조회 GET 허용 |
+| BG_ENABLED | 업무 화면 외부 배경 조회 허용 |
+| BG_RECORDING_ENABLED | V5 적용 후 업무POST·DB 이력 활성화. 기본false |
 | X_CANDIDATE_KEY | 업무 외부 API 키, 서버 관리 |
-| BG_CONNECT_TIMEOUT_MS/BG_REQUEST_TIMEOUT_MS | 업무 GET 연결·전체 제한, 운영값 TODO |
+| BG_CONNECT_TIMEOUT_MS/BG_REQUEST_TIMEOUT_MS | 업무 연결·전체 요청 제한, 기본5000/30000ms |
+| BG_MAX_RETRIES/BG_RETRY_BACKOFF_MS | GET 추가retry/Fixed대기, 기본0/1000ms. POSTretry항상0 |
+| BG_POLLING_INTERVAL_MS/BG_POLLING_MAX_DURATION_MS/BG_POLLING_MAX_ATTEMPTS | 자동 상태 확인 간격/전체 시간/최대 횟수, 기본5000/120000/24 |
 
 Lab 입력 키는 해당 요청에서만 사용하고 저장하지 않는다. 업무 키·비밀번호를 VITE_*·소스·로그에 넣지 않는다. 세션 만료·쿠키·프록시 설정 확정은 별도이며 이번 자료 통합에서 변경하지 않았다. 상태 확인은 /api/health와 /api/health/db다.
 

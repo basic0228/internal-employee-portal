@@ -11,6 +11,7 @@ import { useAuthStore } from './stores/auth'
 import EmployeeCreateDialog from './components/EmployeeCreateDialog.vue'
 import BackgroundCheckDialog from './components/BackgroundCheckDialog.vue'
 import ReliabilityLab from './components/ReliabilityLab.vue'
+import { canAutoPoll, pollDelay } from './backgroundcheck/policy'
 
 const auth = useAuthStore()
 const loginForm = reactive({ username: '', password: '' })
@@ -25,17 +26,26 @@ const createVisible = ref(false)
 const selected = ref(null)
 const checkVisible = ref(false)
 const checkHistory = ref([]), historyLoaded = ref(false), historyError = ref(''), checkDetail = ref(null)
+const checkAvailable = ref(false), checkBusy = ref(false), checkOffset = ref(0), checkTotal = ref(0), checkViews = ref([])
+const externalChecks = ref([]), unknownRequest = ref(null)
+let checkTimer, checkGeneration = 0, pollingInterval = 5000
+const checkActionIds = new Map()
+function stopCheckPolling() { clearTimeout(checkTimer); checkGeneration++ }
+function checkBase(id = selected.value?.employeeId) { return '/admin/employees/' + encodeURIComponent(id) + '/background-checks' }
 const terminationTarget = ref(null)
 const labVisible = ref(false)
 function clearPrivateData() {
+  stopCheckPolling()
+  checkActionIds.clear()
   auth.clear(); employees.value = []; myself.value = null
   labVisible.value = false
   contactForm.email = ''; contactForm.phone = ''; contactSaved.value = false
   selected.value = null; checkVisible.value = false; createVisible.value = false; terminationTarget.value = null
   checkHistory.value = []; historyLoaded.value = false; historyError.value = ''; checkDetail.value = null
+  checkViews.value = []; externalChecks.value = []; unknownRequest.value = null; checkAvailable.value = false
 }
 onUnauthorized(clearPrivateData)
-onUnmounted(() => onUnauthorized(() => {}))
+onUnmounted(() => { stopCheckPolling(); onUnauthorized(() => {}) })
 async function load() {
   if (auth.user?.role === 'ADMIN') employees.value = (await api.get('/admin/employees')).data
   else if (auth.user) {
@@ -76,16 +86,83 @@ async function saveContact() {
   finally { busy.value = false }
 }
 async function showCheck(employee) {
+  stopCheckPolling();checkOffset.value = 0
   selected.value = employee; checkVisible.value = true; checkHistory.value = []; historyLoaded.value = false; historyError.value = ''; checkDetail.value = null
-  try {
-    const response = await api.get('/admin/employees/' + encodeURIComponent(employee.employeeId) + '/background-checks')
-    if (checkVisible.value && selected.value?.employeeId === employee.employeeId) { checkHistory.value = response.data.checks; historyLoaded.value = true }
-  } catch (failure) { historyError.value = errorMessage(failure) }
+  checkViews.value = [];externalChecks.value = [];unknownRequest.value = null;checkAvailable.value = false
+  await loadCheckHistory()
 }
-async function showCheckDetail(checkId) {
-  if (!selected.value) return
-  try { checkDetail.value = (await api.get('/admin/employees/' + encodeURIComponent(selected.value.employeeId) + '/background-checks/' + encodeURIComponent(checkId))).data }
-  catch (failure) { historyError.value = errorMessage(failure) }
+async function loadCheckHistory() {
+  if (!selected.value || !checkVisible.value) return
+  const employee = selected.value, generation = checkGeneration
+  try {
+    const response = await api.get(checkBase(employee.employeeId) + '/history', { params: { offset: checkOffset.value } })
+    if (generation === checkGeneration && checkVisible.value && selected.value?.employeeId === employee.employeeId) {
+      checkHistory.value = response.data.checks; historyLoaded.value = true; checkAvailable.value = response.data.available
+      checkTotal.value = response.data.totalCount; pollingInterval = response.data.pollingIntervalMs
+      scheduleCheckPolling()
+    }
+  } catch (failure) { if (generation === checkGeneration) historyError.value = errorMessage(failure) }
+}
+function scheduleCheckPolling() {
+  clearTimeout(checkTimer)
+  const row = checkHistory.value.find(item => canAutoPoll(item)), generation = checkGeneration
+  if (!row || !checkVisible.value || !checkAvailable.value) return
+  checkTimer = setTimeout(async () => {
+    if (generation !== checkGeneration || !checkVisible.value || !canAutoPoll(row)) return
+    try {
+      await postWithCsrf(checkBase() + '/history/' + encodeURIComponent(row.requestId) + '/refresh', { automatic: true })
+      if (generation === checkGeneration) await loadCheckHistory()
+    } catch (failure) { if (generation === checkGeneration) historyError.value = errorMessage(failure) }
+  }, pollDelay(row, pollingInterval))
+}
+function closeCheck(value) { checkVisible.value = value;if (!value) { stopCheckPolling();checkDetail.value = null;checkViews.value = [] } }
+async function requestCheck(input) {
+  if (checkBusy.value) return
+  const id = selected.value.employeeId, generation = checkGeneration
+  checkBusy.value = true;historyError.value = '';checkDetail.value = null
+  const actionId = checkActionIds.get(id) || crypto.randomUUID()
+  checkActionIds.set(id, actionId)
+  try {
+    await postWithCsrf(checkBase(id), { requestId: actionId, ...input })
+    checkActionIds.delete(id)
+    if (generation === checkGeneration) await loadCheckHistory()
+  } catch (failure) {
+    if (generation === checkGeneration) { historyError.value = errorMessage(failure);await loadCheckHistory() }
+  } finally { checkBusy.value = false }
+}
+async function showCheckDetail(requestId) {
+  if (!selected.value || checkBusy.value) return
+  const generation = checkGeneration
+  checkBusy.value = true;checkDetail.value = null;historyError.value = '';checkViews.value = []
+  try {
+    const { data } = await postWithCsrf(checkBase() + '/history/' + encodeURIComponent(requestId) + '/refresh', { automatic: false })
+    if (generation === checkGeneration) {
+      checkDetail.value = data.detail || null;checkViews.value = data.views || []
+      if (!data.detail) historyError.value = '상세 결과를 확인하지 못했거나 호출 간격 제한 중입니다. 이력 상태를 확인하세요.'
+      await loadCheckHistory()
+    }
+  } catch (failure) { if (generation === checkGeneration) historyError.value = errorMessage(failure) }
+  finally { checkBusy.value = false }
+}
+async function inspectUnknown(requestId) {
+  checkBusy.value = true;externalChecks.value = [];unknownRequest.value = requestId;historyError.value = ''
+  const generation = checkGeneration
+  try {
+    const { data } = await api.get(checkBase() + '/history/' + encodeURIComponent(requestId) + '/candidates')
+    if (generation === checkGeneration) externalChecks.value = data.checks
+  } catch (failure) { if (generation === checkGeneration) historyError.value = errorMessage(failure) }
+  finally { checkBusy.value = false }
+}
+async function resolveUnknown(checkId) {
+  checkBusy.value = true;historyError.value = '';const generation = checkGeneration
+  try {
+    await postWithCsrf(checkBase() + '/history/' + encodeURIComponent(unknownRequest.value) + '/resolve', { checkId, confirmed: true })
+    if (generation === checkGeneration) { externalChecks.value = [];unknownRequest.value = null;await loadCheckHistory() }
+  } catch (failure) { if (generation === checkGeneration) historyError.value = errorMessage(failure) }
+  finally { checkBusy.value = false }
+}
+async function checkPage(offset) {
+  stopCheckPolling();checkOffset.value = offset;await loadCheckHistory()
 }
 async function terminate() {
   if (!terminationTarget.value) return
@@ -141,7 +218,10 @@ async function terminate() {
         </template></Column>
       </DataTable>
       <EmployeeCreateDialog v-model:visible="createVisible" @created="reload" />
-      <BackgroundCheckDialog v-model:visible="checkVisible" :employee="selected" :history="checkHistory" :historyLoaded="historyLoaded" :historyError="historyError" :detail="checkDetail" @detail="showCheckDetail" />
+      <BackgroundCheckDialog :visible="checkVisible" @update:visible="closeCheck" :employee="selected" :history="checkHistory"
+        :historyLoaded="historyLoaded" :historyError="historyError" :detail="checkDetail" :available="checkAvailable" :busy="checkBusy"
+        :views="checkViews" :offset="checkOffset" :total="checkTotal" :externalChecks="externalChecks" :unknownRequest="unknownRequest"
+        @request="requestCheck" @detail="showCheckDetail" @inspect="inspectUnknown" @resolve="resolveUnknown" @page="checkPage" @refresh="loadCheckHistory" />
     </section>
     <section v-else-if="myself" class="portal-panel">
       <h2>내 정보</h2>

@@ -17,7 +17,7 @@ import org.springframework.security.web.context.SecurityContextHolderFilter;
 
 @Configuration
 @Profile("portal-dev")
-@MapperScan({"com.bit.portal.employee", "com.bit.portal.auth"})
+@MapperScan({"com.bit.portal.employee", "com.bit.portal.auth", "com.bit.portal.backgroundcheck"})
 public class PortalDevSecurityConfig {
     @Bean PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(); }
 

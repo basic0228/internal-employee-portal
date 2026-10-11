@@ -22,6 +22,7 @@ public final class MockBackgroundApi implements AutoCloseable {
         server.setExecutor(threads);server.createContext("/background-checks",this::handle);server.start();
     }
     public String baseUrl() { return "http://127.0.0.1:"+server.getAddress().getPort(); }
+    public void reset() { calls.set(0);posts.set(0);checks.clear();mode="NORMAL"; }
     public void seedPending(String employee) {
         var item=new ConcurrentHashMap<String,Object>();
         item.put("checkId","PRIVATE-PENDING-ID");item.put("employeeId",employee);item.put("status","pending");
@@ -61,7 +62,9 @@ public final class MockBackgroundApi implements AutoCloseable {
                 item.put("dateOfBirth",input.path("dateOfBirth").asText());item.put("createdAt",Instant.now().minusSeconds(1).toString());
                 item.put("estimatedCompletionSeconds",1);
                 if("IMMEDIATE_FINAL".equals(mode)) {item.put("status","clear");item.put("completedAt",Instant.now().toString());}
-                checks.put(id,item);send(x,201,item);return;
+                checks.put(id,item);
+                if("LOST_CREATE".equals(mode)) sleep(1500); // Created before the client times out; local fixture only.
+                send(x,201,item);return;
             }
             if(path.equals("/background-checks")) {
                 String employee=x.getRequestURI().getRawQuery()==null?"":x.getRequestURI().getRawQuery().replace("employeeId=","");

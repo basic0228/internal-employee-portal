@@ -109,9 +109,17 @@ E01–E03=10초/동시성1·2·3, E04–E06=30초/1·2·3, E07–E09=60초/1·2�
 
 ## 10. 설정 후보와 최종 선택
 
-[API_DECISION_EVIDENCE.md](API_DECISION_EVIDENCE.md)에 측정 ID·n·통계·모형·대안·재검토 상황을 연결했다. 연결/전체 timeout, 재시도 횟수·간격, polling, 중단 조건의 **최종 운영값은 사용자 확인 전 TODO**다. 실험 보호값을 운영 권장값으로 옮기지 않는다. 설정명은 실제 JDK Client의 connect-timeout-ms/request-timeout-ms이며 별도 socket read-timeout은 구현되지 않았다. 업무 GET에는 두 timeout만 연결되고 업무 자동 retry/polling은 미구현이다.
+[API_DECISION_EVIDENCE.md](API_DECISION_EVIDENCE.md)에 측정 ID·n·통계·모형·대안·재검토 상황을 연결했다. 연결/전체 timeout, 재시도 횟수·간격, polling, 중단 조건의 **최종 운영값은 사용자 확인 전 TODO**다. 실험 보호값을 운영 권장값으로 옮기지 않는다. 설정명은 실제 JDK Client의 connect-timeout-ms/request-timeout-ms이며 별도 socket read-timeout은 구현되지 않았다. 이후 업무 구현 요청으로 두 timeout과 GET 재시도·관리자 화면 폴링 정책을 연결했다. 적용 초기값과 실측 최적값은 다음 절에서 구분한다.
 
-## 11. 재현과 검증 범위
+## 11. 근거가 부족한 항목과 초기 구현값
+
+업무용 POST·이력 저장 구현 시에도 다음 한계를 제출 설명에 남긴다. **POST 타임아웃 후 생성 여부 복구의 실제 외부 검증 n=0**, **pending→최종 발견 n=0/업무 처리시간 n=0**, **최소 재조회 간격·결과 유효기간 검증 자료 없음**이다. 완료201 POST8건과 중복 비교2쌍만으로 응답 유실 복구율·완료시간·기간을 추정하지 않는다.
+
+사용자의 설정 구현 요청에 따라 연결5초·전체 요청30초·GET 추가retry0회·POSTretry0회·폴링5초/전체120초/최대24회·업무 인스턴스당 동시1을 보수적 초기값으로 적용했다. timeout30초는 약27초의 정상LIST 관측을 수용하며, 나머지 상한은 회복·완료시간의 최적 추정치가 아닌 자원 보호 선택이다. [업무 정책·설정·한계](BACKGROUND_CHECK_POLICY.md)에 설정명·판단 경계·수동 복구를 정리했다.
+
+이번 로컬 모의 API의 응답 유실·pending 전환·재시도 성공 테스트를 기존39run/65시도에 추가하거나 실제 외부 n=0을 변경하지 않았다. 새로운 운영 기능의 PostgreSQL·Railway 검증은 TODO다.
+
+## 12. 재현과 검증 범위
 
 오프라인 실행: `node scripts/integrate-submission-evidence.mjs`. runId/attemptId 중복 제거, 반복 snapshot의 조건·attempt 일치, 민감 필드0, 종료 EXTERNAL, 초기34·후속18/POST2 대조를 검증했다. source별 SHA256을 통합 JSON에 보존했다. Excel은 같은 JSON에서 생성하며 후보 변경·원복과 수식 오류0을 확인했다. 저장된 XLSX에서65건의 run·Endpoint·전송 결과·HTTP·지연·시각을 원본과 대조했다. 대체 미리보기로5시트와 후보의3개 영역을 검토해 표시 잘림0건을 확인했다. native 렌더러 Vulkan 오류로 실제 Excel 시각 검증은 미완료이며 [검증 기록](measurements/integrated/workbook-validation.json)에 이 한계를 명시했다.
 

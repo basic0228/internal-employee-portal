@@ -7,6 +7,7 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Tag from 'primevue/tag'
 import Message from 'primevue/message'
+import { blocksCreation, findings } from '../backgroundcheck/policy'
 
 const props = defineProps({
   visible: Boolean, employee: Object,
@@ -14,14 +15,20 @@ const props = defineProps({
   historyLoaded: { type: Boolean, default: false },
   available: { type: Boolean, default: false },
   historyError: { type: String, default: '' }, detail: { type: Object, default: null },
+  busy: Boolean, views: { type: Array, default: () => [] }, offset: Number, total: Number,
+  externalChecks: { type: Array, default: () => [] }, unknownRequest: String,
 })
-const emit = defineEmits(['update:visible', 'request', 'detail'])
-const form = reactive({ firstName: '', lastName: '', dateOfBirth: '' })
+const emit = defineEmits(['update:visible', 'request', 'detail', 'inspect', 'resolve', 'page', 'refresh'])
+const form = reactive({ firstName: '', lastName: '', dateOfBirth: '', confirmRecheck: false })
+const blocking = computed(() => props.history.some(blocksCreation))
+const needsConfirmation = computed(() => props.total > 0)
+const candidate = reactive({ checkId: '', confirmed: false })
 watch(() => [props.visible, props.employee?.employeeId], () => {
   // Never guess a Korean surname boundary. Query inputs do not update the employee.
   form.firstName = ''
   form.lastName = ''
   form.dateOfBirth = props.employee?.dateOfBirth || ''
+  form.confirmRecheck = false;candidate.checkId = '';candidate.confirmed = false
 }, { immediate: true })
 const valid = computed(() => form.firstName.trim() && form.lastName.trim() && form.dateOfBirth)
 const states = {
@@ -31,11 +38,10 @@ const states = {
 }
 const state = value => states[value] || { label: '확인 불가', severity: 'secondary' }
 function submit() {
-  if (!props.available || !valid.value || !props.employee) return
+  if (!props.available || !valid.value || !props.employee || props.busy || blocking.value || needsConfirmation.value && !form.confirmRecheck) return
   emit('request', {
-    employeeId: props.employee.employeeId,
     firstName: form.firstName.trim(), lastName: form.lastName.trim(),
-    dateOfBirth: form.dateOfBirth,
+    dateOfBirth: form.dateOfBirth, confirmRecheck: form.confirmRecheck,
   })
 }
 </script>
@@ -51,25 +57,49 @@ function submit() {
       <InputText id="check-first-name" v-model="form.firstName" required maxlength="100" />
       <label for="check-birth">조회용 생년월일</label>
       <InputText id="check-birth" v-model="form.dateOfBirth" type="date" required />
-      <Button type="submit" label="조회" :disabled="!available || !valid" />
+      <label v-if="needsConfirmation"><input type="checkbox" v-model="form.confirmRecheck" /> 기존 결과 열람과 별도로 새 배경 조회를 생성합니다.</label>
+      <Button type="submit" label="신규 조회" :loading="busy" :disabled="!available || !valid || blocking || needsConfirmation && !form.confirmRecheck" />
       <Message v-if="!available" severity="info" :closable="false">
-        배경 조회 생성 정책은 API 실측 후 확정합니다. 현재 POST 생성 요청은 전송되지 않습니다.
+        조회 이력 SQL 및 서버 활성화 설정을 확인해야 합니다. 현재 신규 요청은 전송되지 않습니다.
       </Message>
+      <Message v-if="blocking" severity="warn" :closable="false">진행 중이거나 결과 불명인 요청이 있습니다. 새 요청 대신 기존 조회를 확인하세요.</Message>
     </form>
+    <p>관리자 수동 조회 · 상세 내용 미저장 · 이력 삭제 없음. 자동 상태 확인은 이 화면이 열린 동안만 진행하며, 오류나 대기 상한 도달 시 중단합니다.</p>
     <h3>기존 조회 이력</h3>
+    <Button label="이력 새로고침" text :disabled="busy" @click="emit('refresh')" />
     <Message v-if="historyError" severity="warn" :closable="false">{{ historyError }}</Message>
     <Message v-if="!historyLoaded" severity="info" :closable="false">조회 이력이 아직 연결되지 않았습니다.</Message>
-    <DataTable v-else :value="history" dataKey="checkId">
+    <DataTable v-else :value="history" dataKey="requestId">
       <template #empty>기존 조회 이력이 없습니다.</template>
-      <Column field="createdAt" header="조회 요청 시각" />
+      <Column field="requestedAt" header="조회 요청 시각" />
+      <Column field="requestedByUsername" header="조회 계정" />
+      <Column field="employeeId" header="조회 대상" />
       <Column field="checkId" header="조회 번호" />
       <Column header="상태 및 특이사항">
-        <template #body="{ data }"><Tag :value="state(data.status).label" :severity="state(data.status).severity" /></template>
+        <template #body="{ data }">
+          <Tag :value="data.localState === 'UNKNOWN' ? '생성 여부 불명' : data.localState === 'DISPATCHING' ? '요청 전송 중' : findings(data.status)" :severity="state(data.status).severity" />
+          <p v-if="data.pollStopped && data.status === 'pending'">자동 확인 중단 · 결과 미확정</p>
+          <p v-if="['REJECTED', 'NOT_SENT'].includes(data.localState)">{{ data.localState === 'REJECTED' ? '요청 거절' : '전송되지 않음' }}</p>
+        </template>
       </Column>
+      <Column field="observedAt" header="최근 결과 확인 시각" />
       <Column header="결과">
-        <template #body="{ data }"><Button label="상세" text @click="emit('detail', data.checkId)" /></template>
+        <template #body="{ data }">
+          <Button v-if="data.checkId" label="결과 확인" text :disabled="busy" @click="emit('detail', data.requestId)" />
+          <Button v-if="data.localState === 'UNKNOWN'" label="외부 이력 대조" text :disabled="busy" @click="emit('inspect', data.requestId)" />
+        </template>
       </Column>
     </DataTable>
+    <div class="portal-actions"><Button label="이전" text :disabled="!offset || busy" @click="emit('page', Math.max(0, offset - 100))" />
+      <span>{{ total || 0 }}건 · {{ (offset || 0) + 1 }}부터</span><Button label="다음" text :disabled="offset + 100 >= total || busy" @click="emit('page', offset + 100)" /></div>
+    <section v-if="unknownRequest">
+      <h3>결과 불명 요청 연결</h3>
+      <p>아래 외부 이력은 생성 여부의 자동 증명이 아닙니다. 요청 시각과 대상을 대조해 연결할 기록을 선택하세요. 확인할 수 없으면 결과 불명을 유지합니다.</p>
+      <select v-model="candidate.checkId" aria-label="연결할 외부 조회"><option value="">조회 선택</option>
+        <option v-for="item in externalChecks" :key="item.checkId" :value="item.checkId">{{ item.checkId }} · {{ item.createdAt }} · {{ item.status }}</option></select>
+      <label><input type="checkbox" v-model="candidate.confirmed" /> 대상과 시각을 확인했고 이 기록을 연결합니다.</label>
+      <Button label="선택한 이력 연결" :disabled="!candidate.checkId || !candidate.confirmed || busy" @click="emit('resolve', candidate.checkId)" />
+    </section>
     <section v-if="detail">
       <h3>조회 상세</h3>
       <p>상태: {{ state(detail.status).label }}</p>
@@ -81,5 +111,7 @@ function submit() {
         <dt>신용 등급</dt><dd>{{ detail.creditScore || '결과 없음' }}</dd>
       </dl>
     </section>
+    <section v-if="views.length"><h3>최근 열람 이력</h3><DataTable :value="views"><Column field="viewed_at" header="열람 시각" />
+      <Column field="username" header="열람 계정" /><Column field="action" header="작업" /><Column field="outcome" header="확인 결과" /></DataTable></section>
   </Dialog>
 </template>

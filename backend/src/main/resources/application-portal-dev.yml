@@ -14,7 +14,15 @@ lab:
 background-check:
   external-enabled: ${BG_EXTERNAL_ENABLED:false}
   enabled: ${BG_ENABLED:false}
+  # Apply V5 explicitly before enabling. No automatic schema changes on deployment.
+  recording-enabled: ${BG_RECORDING_ENABLED:false}
   candidate-key: ${X_CANDIDATE_KEY:}
   client:
-    connect-timeout-ms: ${BG_CONNECT_TIMEOUT_MS:0}
-    request-timeout-ms: ${BG_REQUEST_TIMEOUT_MS:0}
+    connect-timeout-ms: ${BG_CONNECT_TIMEOUT_MS:5000}
+    request-timeout-ms: ${BG_REQUEST_TIMEOUT_MS:30000}
+  policy:
+    max-retries: ${BG_MAX_RETRIES:0}
+    retry-backoff-ms: ${BG_RETRY_BACKOFF_MS:1000}
+    polling-interval-ms: ${BG_POLLING_INTERVAL_MS:5000}
+    polling-max-duration-ms: ${BG_POLLING_MAX_DURATION_MS:120000}
+    polling-max-attempts: ${BG_POLLING_MAX_ATTEMPTS:24}

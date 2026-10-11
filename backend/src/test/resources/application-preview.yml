@@ -15,6 +15,7 @@ spring:
         - classpath:db/migration/V1__employees_and_accounts.sql
         - classpath:db/migration/V3__employee_contact_fields.sql
         - classpath:db/migration/V4__lab_recordings.sql
+        - classpath:db/migration/V5__background_check_history.sql
       data-locations: classpath:db/migration/V2__required_employee_seed.sql
 portal:
   bootstrap:
@@ -29,6 +30,7 @@ lab:
 background-check:
   base-url: http://127.0.0.1:18081
   enabled: true
+  recording-enabled: true
   candidate-key: preview-test-key
   client:
     connect-timeout-ms: 1000

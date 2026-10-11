@@ -33,9 +33,11 @@ Polling의 이상적 발견 모델은 GET 시간0/실패 없음 가정에서 `ce
 
 ## 코드 반영 경계
 
+2026-10-12 사용자 요청으로 업무 POST·이력 저장과 보수적 초기 설정을 구현했다. 적용 기본값은 연결5초/전체30초, 추가 GETretry0, POSTretry0, 폴링5초/120초/24회, 업무 인스턴스당 동시1이다. 위 표의 TODO는 실측 최적값 확정을 뜻하며 **코드 설정이 없다는 의미가 아니다.** 초기값·재검토 이유·운영 적용은 [BACKGROUND_CHECK_POLICY](BACKGROUND_CHECK_POLICY.md)에 분리했다. POST 응답 유실 복구 외부n=0, pending 최종 발견n=0, 재조회 유효기간 근거 없음은 유지한다.
+
 - 업무 GET 설정: `background-check.client.connect-timeout-ms`/`request-timeout-ms`, 환경변수 `BG_CONNECT_TIMEOUT_MS`/`BG_REQUEST_TIMEOUT_MS`. 전체 요청 제한이며 별도 socket read-timeout이 아니다.
 - Lab은 같은 Client에 승인된 실험 값을 요청별로 전달한다. Lab retry·polling이 업무 자동 정책을 적용했다는 뜻은 아니다.
-- 업무 retry/polling/max-in-flight 후보 YAML은 DRAFT다. 미지원 키를 application.yml에 추가하지 않았다. 사용자 확정 후 설정 바인딩·서버 검사·예외 검증과 함께 반영한다.
+- 업무 정책은 실제 설정 바인딩과 서버 검사로 연결했다. 기본retry0, 활성화 시GET500/503에Fixed대기·추가 최대1회를 지원한다. POST는 설정에 관계없이 재시도하지 않는다. 폴링은 서버가 간격·마감·횟수를 검사하고 관리자 화면에서 후속 확인을 요청한다. Lab 후보 출력은 계속DRAFT이며 자동으로 업무 설정을 적용하지 않는다.
 - 현재 실험은503/429/대기 안내/timeout/네트워크·계약·저장 오류에서 후속 묶음을 차단한다. C03의 정상 형식500 계속 수집은 승인된 비교 예외다. 업무 운영 중단 정책은 TODO다.
 
 추가 실험은 잔여 예산을 자동 소진하지 않는다. [후속 계획](LAB_FOLLOWUP_TEST_PLAN.md)의 선행 조건을 지킨다. 최종 판단은 [DECISIONS](DECISIONS.md)에 사용자 확인 후 반영한다.
