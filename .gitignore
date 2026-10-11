@@ -13,3 +13,6 @@
 
 # Local verification tools and Maven cache; never deploy these.
 .tools/
+
+# Generated workbook exports/previews. Verified source JSONs stay in docs/measurements/raw/.
+/outputs/

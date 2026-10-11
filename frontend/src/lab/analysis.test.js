@@ -19,7 +19,14 @@ test('latency excludes censored responses but codes and errors use all attempt d
 test('timeout candidates preserve unknowns instead of using timeout as completed latency', () => {
   const rows = [{outcome:'HTTP_RESPONSE',elapsedMs:80},{outcome:'REQUEST_TIMEOUT',elapsedMs:50},{outcome:'NETWORK_ERROR',elapsedMs:200}]
   assert.deepEqual(timeoutComparison(rows,100),{n:3,exceeds:0,within:1,unknown:2,httpN:1,httpExceeds:0,httpRatio:0})
-  assert.equal(timeoutComparison(rows,40).exceeds,2)
+  assert.equal(timeoutComparison(rows,40).exceeds,1)
+  assert.equal(timeoutComparison(rows,40).unknown,2)
+})
+test('timeout cancellation overhead does not prove a higher candidate was exceeded', () => {
+  // Regression from the first EXTERNAL observation. The completed response time was never observed.
+  const rows=[{outcome:'REQUEST_TIMEOUT',elapsedMs:10003.931728,requestTimeoutMs:10000}]
+  assert.equal(timeoutComparison(rows,10001).exceeds,0)
+  assert.equal(timeoutComparison(rows,10001).unknown,1)
 })
 test('retry model counts additional attempts and filters observed hints by selected status', () => {
   const p={retries:2,initialMs:100,capMs:500,attemptMs:1000,deadlineMs:8000,respectRetryAfter:true,statuses:[503]}

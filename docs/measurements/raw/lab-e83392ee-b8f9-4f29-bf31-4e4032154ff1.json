@@ -1,0 +1,89 @@
+{
+  "phases": [
+    {
+      "elapsedMs": 10014.39956,
+      "n": 1,
+      "concurrency": 1
+    }
+  ],
+  "workflows": [],
+  "run": {
+    "runId": "e83392ee-b8f9-4f29-bf31-4e4032154ff1",
+    "comparisonGroupId": "e83392ee-b8f9-4f29-bf31-4e4032154ff1",
+    "type": "GET_BASELINE",
+    "endpoint": "LIST",
+    "targetAlias": "target-1",
+    "source": "EXTERNAL",
+    "startedAt": "2026-10-11T06:33:53.688504099Z",
+    "updatedAt": "2026-10-11T06:34:03.753797079Z",
+    "reason": null,
+    "state": "COMPLETED",
+    "plannedUpperBound": 1,
+    "started": 1,
+    "notStarted": 0,
+    "finished": 1,
+    "conditions": {
+      "repeats": 1,
+      "connectTimeoutMs": 5000,
+      "durationMs": 30000,
+      "intervalMs": 1000,
+      "maxConcurrency": 1,
+      "callBudget": 1,
+      "requestTimeoutMs": 10000,
+      "maxPolls": 5,
+      "pollIntervalMs": 5000
+    },
+    "javaVersion": "21.0.12.1",
+    "client": "JDK HttpClient HTTP_1_1",
+    "revision": "cc326e8d5f18ea12b5b9f9514878a8dd9505622a",
+    "specVersion": "1.1.1",
+    "specSha256": "30e38d5a486238827407063b4ca549e67b5f046c8ad40e560d45a1729eb86d24",
+    "quantileMethod": "TYPE_7",
+    "connectionMode": "reusedClient (physical connection reuse not instrumented)",
+    "retryMode": "Application OFF / transparent transport recovery not instrumented"
+  },
+  "postComparison": {},
+  "attempts": [
+    {
+      "attemptId": "12e4ca11-8374-4fee-87a8-3654704740fb",
+      "sequence": 1,
+      "logicalOperationId": "e83392ee-b8f9-4f29-bf31-4e4032154ff1/1/1",
+      "endpoint": "LIST",
+      "concurrency": 1,
+      "retryIndex": 0,
+      "outcome": "REQUEST_TIMEOUT",
+      "httpCode": null,
+      "elapsedMs": 10003.931728,
+      "queueWaitMs": 1.19233,
+      "startedAt": "2026-10-11T06:33:53.742443684Z",
+      "endedAt": "2026-10-11T06:34:03.746383272Z",
+      "requestTimeoutMs": 10000,
+      "httpVersion": null,
+      "responseBytes": null,
+      "retryAfter": {
+        "header": null,
+        "headerMs": null,
+        "bodyMs": null,
+        "invalidHeader": false,
+        "conflict": false
+      },
+      "issues": []
+    }
+  ],
+  "decisions": [],
+  "candidates": {
+    "timeoutMs": null,
+    "retry": {
+      "retries": 0,
+      "initialMs": null,
+      "capMs": null,
+      "attemptMs": null,
+      "deadlineMs": null,
+      "respectRetryAfter": true
+    },
+    "retryStatuses": "",
+    "pollIntervalMs": null,
+    "pollMax": null,
+    "pollDurationMs": null
+  }
+}

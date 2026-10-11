@@ -22,6 +22,8 @@ const candidates = reactive({ timeoutMs: null, retry: { retries: 0, initialMs: n
   retryStatuses: '', pollIntervalMs: null, pollMax: null, pollDurationMs: null })
 const draft = reactive({ setting: 'request-timeout-ms', value: '', reason: '', alternative: '', failureCase: '' })
 const decisions = ref([])
+const showJson = ref(false)
+const exportJson = computed(() => result.value ? JSON.stringify({ ...result.value, decisions: decisions.value, candidates }, null, 2) : '')
 const isPost = computed(() => ['CREATE_POLL','REPEAT_POST'].includes(form.type))
 const planned = computed(() => form.type === 'GET_CONCURRENCY' ? form.repeats * form.concurrency
   : form.type === 'CREATE_POLL' ? 1 + form.maxPolls : form.type === 'REPEAT_POST' ? 4 : form.repeats)
@@ -68,7 +70,7 @@ function acceptEvent(event) {
   if (event.type === 'result') result.value = event.data
 }
 async function execute() {
-  error.value = ''; busy.value = true; result.value = null; decisions.value = []; events.value = 0
+  error.value = ''; busy.value = true; result.value = null; decisions.value = []; events.value = 0; showJson.value = false
   cohort.value = isPost.value && form.type === 'CREATE_POLL' ? 'DETAIL' : form.endpoint
   abort = new AbortController()
   try {
@@ -137,7 +139,7 @@ function addDecision() {
 }
 function save(kind) {
   const filename = 'lab-' + result.value.run.runId
-  if (kind === 'json') download(filename + '.json', JSON.stringify({ ...result.value, decisions: decisions.value, candidates }, null, 2), 'application/json')
+  if (kind === 'json') download(filename + '.json', exportJson.value, 'application/json')
   if (kind === 'csv') download(filename + '.csv', csv(result.value), 'text/csv')
   if (kind === 'md') download(filename + '.md', markdown(result.value, decisions.value, candidates, cohort.value), 'text/markdown')
   if (kind === 'yaml') download(filename + '-draft.yaml', configuration(decisions.value), 'application/yaml')
@@ -230,7 +232,7 @@ function save(kind) {
     </section>
     <section class="portal-panel">
       <h3>C. 설계값 시뮬레이터</h3>
-      <p>후보값을 바꾸어도 API를 호출하지 않습니다. 아래 결과는 관측 재분류 또는 명시된 가정의 수학 모델입니다.</p>
+      <p>후보값을 바꾸어도 API를 호출하지 않습니다. 아래 결과는 관측 재분류 또는 명시된 가정의 수학 모델입니다. 전송 중단 경과시간에는 타이머·취소 지연이 포함되어 후보 초과를 확정하지 않고 미확정으로 표시합니다.</p>
       <h4>Timeout 후보</h4><div class="lab-field"><label for="candidate-timeout">후보 전체 요청 제한 ms</label><InputNumber inputId="candidate-timeout" v-model="candidates.timeoutMs" :min="1" /></div>
       <p>완료 HTTP 초과 {{ timeout.httpExceeds }}/{{ timeout.httpN }} ({{ display(timeout.httpRatio) }}%) · 전체 n={{ timeout.n }}에서 확정 초과 {{ timeout.exceeds }}, 비초과 {{ timeout.within }}, 미확정 {{ timeout.unknown }}.</p>
       <p>p95={{ display(summary.http.p95) }}ms, p99={{ display(summary.http.p99) }}ms / n={{ summary.http.n }}. 짧으면 조기 중단·재호출 부담, 길면 리소스 점유·대기가 증가합니다. 연결 단계 시간은 계측하지 않아 connect-timeout 판단은 추가 실험 필요입니다.</p>
@@ -266,7 +268,11 @@ function save(kind) {
     <section class="portal-panel">
       <h3>E. 설정·산출물 초안</h3><div class="portal-actions">
         <Button label="원본 JSON" :disabled="!result || busy" @click="save('json')" /><Button label="원본 CSV" :disabled="!result || busy" @click="save('csv')" />
+        <Button label="JSON 텍스트 보기" severity="secondary" :disabled="!result || busy" @click="showJson = !showJson" />
         <Button label="MEASUREMENTS Markdown" :disabled="!result || busy" @click="save('md')" /><Button label="설정 YAML 초안" :disabled="!result || busy" @click="save('yaml')" /></div>
+      <div v-if="showJson"><label for="lab-export-json">다운로드가 열리지 않으면 아래 원본을 선택해 복사하고 .json 파일로 저장하세요.</label>
+        <textarea id="lab-export-json" :value="exportJson" readonly rows="12" style="width:100%;margin-top:0.5rem" />
+        <p>결과는 화면 메모리에 있습니다. 새 실험이나 새로고침 전에 저장하세요.</p></div>
       <pre>{{ configuration(decisions) }}</pre><p>미선택 항목은 TODO입니다. 현재 코드의 설정 바인딩은 확인 후 연결합니다. 문서·운영 설정을 자동으로 덮어쓰지 않습니다.</p>
     </section>
   </section>

@@ -98,6 +98,11 @@ ${decisions.map(d => `- 설정 ${safe(d.setting)}=${safe(JSON.stringify(d.value)
 export function download(name, content, type = 'text/plain') {
   const url = URL.createObjectURL(new Blob([content], { type }))
   const link = document.createElement('a')
-  link.href = url; link.download = name; link.click()
-  setTimeout(() => URL.revokeObjectURL(url), 1000)
+  link.href = url; link.download = name; link.style.display = 'none'
+  // A connected link and longer URL lifetime also support browsers that queue the save dialog.
+  document.body.appendChild(link)
+  try { link.click() } finally {
+    link.remove()
+    setTimeout(() => URL.revokeObjectURL(url), 60000)
+  }
 }

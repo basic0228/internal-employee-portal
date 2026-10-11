@@ -69,6 +69,31 @@ Excel 생성 시 실제 수집 파일만 사용한다. 예정 구성:
 
 Excel·원본·runId로 MEASUREMENTS.md의 실제 관측을 채운다. 근거가 있는 후보·한계·추가 실험을 정리해 사용자에게 제시한다. 사용자 결정 후 DECISIONS.md와 실제 설정 코드를 맞추고 다시 검증한다. 보관·업무 POST 실행 정책 등 통계만으로 정할 수 없는 항목은 별도 판단으로 유지한다.
 
+## 2026-10-11 반복 측정 도구 준비 결과
+
+- 첫 외부 타임아웃의 실제 다운로드 JSON을 사용자에게 받아 비식별 필드와 SHA-256을 확인하고 원본을 보존했다. 두 번째 LIST GET은 HTTP 200, 화면 지연 2,365.36ms(n=1)이었으나 다운로드 버튼 문제 후 새로고침되어 원본이 남지 않았다. 정확한 JSON을 복원했다고 주장하지 않는다.
+- `scripts/measure-lab-get.ps1`를 작성하고 로컬 모의 API에서 2차수×2회, 총 4개 GET 관측·JSON 저장을 검증했다. 외부 수치와 섞지 않는다. 승인된 외부 3회 계획의 dry run도 네트워크 요청 없이 확인했다.
+- 사용자가 동일 가상 사번 LIST GET 3회·동시성 1·2초 간격·연결 5초·요청 30초·실험 100초·POST/자동 재시도 없음 조건을 승인했다. 비밀번호와 키는 사용자 직접 프롬프트 입력이 필요하므로 실제 실행은 대기 중이다. [명령과 결과 보존 절차](MEASUREMENT_SCRIPTS.md)를 따른다.
+- Excel은 현재 첫 원본 1건으로 Summary/Candidates/Attempts/Runs 핵심 시트를 만들었다. 미관측 업무·재시도·Polling 시트를 가상 결과로 채우지 않았다. 수식 검증은 통과했고 렌더러 Vulkan 오류로 시각 검증은 미완료다.
+- UI에 JSON 텍스트 대체 경로와 다운로드 보완을 추가했다. 로컬 모의 결과의 텍스트 유효성·키 미포함은 확인했으나 배포 후 파일 저장은 미검증이다. 사용자 수동 재배포 후 확인한다. 이번 GET 스크립트는 기존 배포된 백엔드에서 동작하므로 이 UI 재배포를 기다릴 필요는 없다.
+- 새 운영 timeout/retry/polling 설정과 DECISIONS의 정책 TODO는 자동 변경하지 않았다.
+
+## 2026-10-11 배포 후 확인 기록
+
+- 사용자가 Postgres 콘솔에서 V1 → V2 → V3 초기 SQL을 실행했다. 제공된 화면에서 오류 없이 직원 10명·계정 0개가 확인됐다. AI가 운영 DB에 직접 SQL을 실행하지 않았다.
+- 사용자가 앱 변수 설정 후 수동 배포 완료를 알렸다. 아래 확인만으로 배포 커밋 SHA를 독립적으로 확인한 것은 아니다.
+- 실제 배포 URL GET `/api/health` 1회: HTTP 200, status UP.
+- GET `/api/health/db` 1회: HTTP 200, database UP.
+- GET `/api/auth/csrf` 2회: 모두 HTTP 200. 첫 확인에서 토큰 존재 및 X-CSRF-TOKEN 헤더명을 확인했고 값은 출력하지 않았다.
+- 비로그인 GET `/api/admin/employees` 1회: HTTP 401.
+- 브라우저에서 새 로그인 화면을 확인했다. 해당 탭의 warn/error 콘솔 기록은 비어 있었다. 관리자 로그인·권한별 전체 흐름·실제 외부 API 시험은 아직 하지 않았다.
+- 두 번째 CSRF 응답의 JSESSIONID 쿠키 속성 확인: HttpOnly 관측, Secure 미관측, SameSite 미관측. 쿠키 값은 출력하거나 저장하지 않았다. 사용자가 앱 서비스에 Secure=true 및 SameSite=lax의 적용 여부를 확인하고 재배포한 후 다시 검증해야 한다.
+- 사용자의 추가 재배포 후 GET `/api/auth/csrf` 1회 재확인: HTTP 200, JSESSIONID 발급, Secure=true, HttpOnly=true, SameSite=Lax. 쿠키 값·토큰은 출력하지 않았다. 앞선 쿠키 속성 누락은 이 재확인에서 해소됐다.
+- 브라우저에는 이전 관리자 직원 목록 10명이 표시되어 있었으나, API Reliability Lab 메뉴를 열자 로그인 화면으로 전환됐다. 새 배포에서 관리자 재로그인이 필요하다. 아직 외부 API 요청을 실행하지 않았다.
+- 이후 사용자가 관리자 재로그인을 완료했다. 직원 10명 목록과 Lab EXTERNAL 화면을 확인했다. 사용자가 입력한 키로 시험용 가상 사번의 순차 이력 GET 1회(runId `e83392ee-b8f9-4f29-bf31-4e4032154ff1`)를 실행했다. 10초 전체 요청 제한에서 REQUEST_TIMEOUT, HTTP 코드 미관측, 완료 HTTP n=0이었다. 상세는 MEASUREMENTS.md에 기록했다. 키 삭제와 streaming 최종 이벤트는 확인했고 POST·동시성 부하·n차 스크립트 실행은 하지 않았다. 원본 JSON의 파일 저장은 아직 미확인이다.
+- 최초 로컬 셸의 HTTP 조회는 네트워크 제한으로 연결되지 않았다. 읽기 전용 네트워크 접근 승인을 거쳐 위 결과를 확인했다. 이 실패를 배포 앱의 장애로 해석하지 않는다.
+- 이 기록은 배포 기능 확인이며 외부 API 성능 측정 자료가 아니다. MEASUREMENTS.md의 외부 실측 TODO 및 DECISIONS.md의 미확정 정책을 그대로 유지한다.
+
 ## 참고
 
 - [Railway Dockerfile 빌드 변수](https://docs.railway.com/builds/dockerfiles)

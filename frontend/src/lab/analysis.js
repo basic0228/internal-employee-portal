@@ -43,7 +43,8 @@ export function timeoutComparison(attempts, candidate) {
   const http = attempts.filter(a => a.outcome === 'HTTP_RESPONSE')
   for (const a of attempts) {
     if (a.outcome === 'HTTP_RESPONSE') a.elapsedMs > candidate ? exceeds++ : within++
-    else if (a.outcome === 'REQUEST_TIMEOUT' && a.elapsedMs > candidate) exceeds++
+    // Abort elapsed includes cancellation/timer overhead, and the run deadline may clip a request.
+    // Until the effective censoring bound is instrumented, it cannot prove completed-latency exceedance.
     else unknown++
   }
   const httpExceeds = http.filter(a => a.elapsedMs > candidate).length

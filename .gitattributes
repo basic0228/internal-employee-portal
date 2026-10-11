@@ -1,0 +1,2 @@
+# Preserve measurement input bytes and their recorded SHA-256 on every platform.
+docs/measurements/raw/*.json -text
