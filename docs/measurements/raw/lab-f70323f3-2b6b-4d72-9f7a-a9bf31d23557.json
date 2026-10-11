@@ -1,0 +1,82 @@
+{
+  "phases": [
+    {
+      "elapsedMs": 30234.735053,
+      "concurrency": 1,
+      "n": 1
+    }
+  ],
+  "attempts": [
+    {
+      "attemptId": "61854b25-97cb-4ae2-b45c-fee2d45be070",
+      "sequence": 1,
+      "logicalOperationId": "f70323f3-2b6b-4d72-9f7a-a9bf31d23557/1/1",
+      "endpoint": "LIST",
+      "concurrency": 1,
+      "retryIndex": 0,
+      "outcome": "REQUEST_TIMEOUT",
+      "httpCode": null,
+      "elapsedMs": 30004.22323,
+      "queueWaitMs": 1.165557,
+      "startedAt": "2026-10-11T07:07:30.890710565Z",
+      "endedAt": "2026-10-11T07:08:00.894931405Z",
+      "requestTimeoutMs": 30000,
+      "httpVersion": null,
+      "responseBytes": null,
+      "retryAfter": {
+        "header": null,
+        "headerMs": null,
+        "bodyMs": null,
+        "invalidHeader": false,
+        "conflict": false
+      },
+      "issues": []
+    }
+  ],
+  "postComparison": {},
+  "run": {
+    "runId": "f70323f3-2b6b-4d72-9f7a-a9bf31d23557",
+    "comparisonGroupId": "f70323f3-2b6b-4d72-9f7a-a9bf31d23557",
+    "type": "GET_BASELINE",
+    "endpoint": "LIST",
+    "targetAlias": "target-1",
+    "source": "EXTERNAL",
+    "startedAt": "2026-10-11T07:07:30.830011833Z",
+    "updatedAt": "2026-10-11T07:08:01.122452414Z",
+    "reason": "CANCELLED",
+    "state": "STOPPED",
+    "plannedUpperBound": 3,
+    "started": 1,
+    "notStarted": 2,
+    "finished": 1,
+    "conditions": {
+      "intervalMs": 2000,
+      "durationMs": 100000,
+      "connectTimeoutMs": 5000,
+      "repeats": 3,
+      "pollIntervalMs": 1,
+      "maxPolls": 1,
+      "requestTimeoutMs": 30000,
+      "callBudget": 3,
+      "maxConcurrency": 1
+    },
+    "javaVersion": "21.0.12.1",
+    "client": "JDK HttpClient HTTP_1_1",
+    "revision": "0debad5e7fc09da10cafcc095421b5831e6b6896",
+    "specVersion": "1.1.1",
+    "specSha256": "30e38d5a486238827407063b4ca549e67b5f046c8ad40e560d45a1729eb86d24",
+    "quantileMethod": "TYPE_7",
+    "connectionMode": "reusedClient (physical connection reuse not instrumented)",
+    "retryMode": "Application OFF / transparent transport recovery not instrumented"
+  },
+  "workflows": [],
+  "collection": {
+    "round": 1,
+    "targetGroupAlias": "target-1",
+    "totalApplicationBudget": 3,
+    "roundGapMs": 0,
+    "plannedRounds": 1,
+    "batchId": "fbfd156a-bfd1-4662-b291-7908d60d5fc6",
+    "automaticRetry": false
+  }
+}

@@ -65,8 +65,9 @@ const runRows = runs.map(d => [d.run.runId,d.run.source,d.run.type,d.run.endpoin
   d.run.conditions.connectTimeoutMs,d.run.conditions.requestTimeoutMs,d.run.conditions.durationMs,
   d.run.conditions.repeats,d.run.conditions.maxConcurrency,d.run.conditions.intervalMs,d.run.conditions.callBudget,
   d.run.javaVersion,d.run.revision,d.run.specVersion,d.run.specSha256,d.file,d.sha,
-  d.collection?.batchId||null,d.collection?.round||null])
-table(provenance,1,['runId','source','type','Endpoint','state','stop reason','connect limit ms','request limit ms','run limit ms','repeats per phase','max concurrency','batch gap ms','call budget','Java','revision','spec version','spec SHA256','source JSON','source SHA256','collection batch','round'],runRows,[42,16,24,12,18,25,19,19,18,19,19,18,16,18,44,16,68,56,68,42,12])
+  d.collection?.batchId||null,d.collection?.round||null,
+  d.run.plannedUpperBound,d.run.started,d.run.finished,d.run.notStarted])
+table(provenance,1,['runId','source','type','Endpoint','state','stop reason','connect limit ms','request limit ms','run limit ms','repeats per phase','max concurrency','batch gap ms','call budget','Java','revision','spec version','spec SHA256','source JSON','source SHA256','collection batch','round','planned upper bound','started n','finished n','not started n'],runRows,[42,16,24,12,18,25,19,19,18,19,19,18,16,18,44,16,68,56,68,42,12,22,16,16,18])
 provenance.freezePanes.freezeRows(1)
 provenance.freezePanes.freezeColumns(1)
 title(summary,'API Reliability Lab — 실제 관측 요약')

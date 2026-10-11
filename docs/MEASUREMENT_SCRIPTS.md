@@ -2,6 +2,8 @@
 
 ## 사용자가 지금 실행할 명령
 
+**현재 상태:** 아래 승인된 계획은 이미 실행됐고 첫 GET 타임아웃 뒤 CANCELLED로 중단됐다(`f70323f3-2b6b-4d72-9f7a-a9bf31d23557`, 실제 n=1/미실행 2). 그대로 재실행하지 않는다. Lab 전용 servlet 응답 제한 수정을 사용자 수동 배포한 뒤, 운영 로그 및 새 측정 계획을 확인한다. 아래 명령은 수행한 계획의 기록이다.
+
 2026-10-11 사용자가 다음 조건으로 승인했다: 실제 외부 API, 동일 가상 사번의 LIST GET 총 3회, 동시성 1, 호출 간 2초, 연결 제한 5초, 전체 요청 제한 30초, 실험 최대 100초. POST·자동 재시도는 없다. 이 값은 실험 조건이며 운영 정책은 TODO다.
 
 PowerShell 7 터미널에서 실행한다. 관리자 아이디·비밀번호와 X-Candidate-Key는 실행 중 프롬프트에 직접 입력한다. 대화나 명령행에 비밀 값을 넣지 않는다.
@@ -49,7 +51,7 @@ pwsh -NoProfile -File "C:\workspace\internal-employee-portal\scripts\measure-lab
 
 이번 Windows 런타임의 이미지 렌더러는 `Failed to resolve Vulkan proc vkEnumerateInstanceVersion`으로 실패했다. `--no-render`로 계산 검증·XLSX 저장은 성공했으나 화면 배치 검증은 미완료다. 렌더링 가능한 환경에서는 옵션을 빼고 생성된 시트 PNG를 직접 확인한다.
 
-현재 초안은 첫 외부 타임아웃 원본 1건만 포함한다. 두 번째 HTTP 200은 화면 관측만 남았으므로 JSON으로 재구성하거나 Excel 원본 표본에 합산하지 않았다. 승인된 3회 측정 파일을 받으면 파일별 조건을 확인하고 다시 생성한다. 평균·Type 7 백분위수는 원본 기반 계산 스냅샷이다. 새 원본이 생기면 빌더를 다시 실행한다. 개수·비율·후보 비교는 Excel 수식이며 후보 셀 입력 변경을 검증했다.
+갱신한 초안은 첫 외부 타임아웃 원본과 스크립트 중단 원본, 총 2개 실행의 실제 관측 2건을 포함한다. 두 번째 브라우저 HTTP 200은 화면 관측만 남았으므로 JSON으로 재구성하거나 Excel 원본 표본에 합산하지 않았다. 실행별 조건을 분리하고 Runs에 예정·시작·종료·미실행 n을 기록한다. 평균·Type 7 백분위수는 원본 기반 계산 스냅샷이다. 새 원본이 생기면 빌더를 다시 실행한다. 개수·비율·후보 비교는 Excel 수식이며 후보 셀 입력 변경을 검증했다.
 
 ## 정책 근거와 남은 검증
 
@@ -58,3 +60,11 @@ pwsh -NoProfile -File "C:\workspace\internal-employee-portal\scripts\measure-lab
 Retry 성공률·Retry-After 실제 효과·업무 완료시간·Polling·동시성 상한은 필요한 실험 전까지 추가 실험 필요다. 후보 셀은 비워 두고 선택 이유·반대 장점·부적절해질 상황은 TODO다. 사용자 확인 전 DECISIONS.md와 Spring 운영 설정을 자동 변경하지 않는다.
 
 JSON 다운로드 보완은 DOM에 연결한 링크와 URL 수명 연장, `JSON 텍스트 보기` 대체 경로다. 로컬 LOCAL_MOCK에서 JSON 유효성·키 미포함·읽기 전용·경고 표시를 확인했다. 실제 배포 후 파일 저장 동작은 별도 검증이 필요하다.
+
+## 중단 재현과 Lab 응답 제한 수정
+
+외부 1회 요청의 timeout과 실험 전체 CANCELLED를 구분한다. StreamingResponseBody에도 별도 servlet async timer가 있다. 제한이 실험 전체보다 짧으면 여러 요청·간격 대기를 수행하는 스레드가 먼저 interrupt될 수 있다. 로컬 실제 Tomcat에서 MVC async 제한 100ms를 강제로 설정한 회귀 테스트가 수정 전 STOPPED로 실패하며 AsyncRequestTimeoutException을 기록했다. 이는 로컬 검증 조건이며 운영 API timeout 추천값이 아니다.
+
+LabController의 해당 실행 요청에만 `durationMs + 5,000ms`를 설정했다. 추가 5초는 실행 종료·최종 이벤트 전송 여유이며 외부 지연 실측으로 결정한 값이 아니다. 외부 개별 요청과 실험 자체의 deadline은 유지한다. 혹시 이 응답 제한까지 도달하면 STREAM_TIMEOUT으로 구분한다. 글로벌 application.yml·쿠키·프록시·보안·DB 설정은 바꾸지 않았다.
+
+수정 후 실제 servlet 반복 timeout 관측 완료와 실험 deadline 중단/최종 이벤트 보존 테스트가 통과했다. Maven package에서 전체 47개 테스트가 통과했다. 운영 로그는 아직 확인하지 않았으며, 운영 CANCELLED가 이 메커니즘이었다는 결론과 배포 후 정상 동작은 별도 검증 대상이다.

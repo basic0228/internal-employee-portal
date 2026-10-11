@@ -168,3 +168,12 @@
 - **사용자 승인:** 순차 실제 LIST GET 총 3회, 동시성 1, 2초 간격, 연결 5초·요청 30초·실험 100초, POST/자동 재시도 없음 조건을 승인했다. 키와 비밀번호는 사용자 프롬프트 입력이 필요하다. 승인 자체를 측정 완료로 기록하지 않는다.
 - **Excel:** 제공된 실제 첫 원본 1건만 @oai/artifact-tool로 생성했다. 전체 n=1/완료 HTTP n=0/중단 n=1, Type 7·조건·SHA-256·후보 TODO를 유지했다. 수식 오류 검사 0건, 후보 입력 변경·빈칸 원복 검증 통과. 이미지 렌더링은 `Failed to resolve Vulkan proc vkEnumerateInstanceVersion`으로 실패했다. 렌더링을 생략한 XLSX 저장은 성공했으나 시각 검증 완료를 주장하지 않는다.
 - **검증 범위:** 프론트 테스트 8개 및 opt-in UI 빌드 성공. 500kB 번들 경고가 남아 있다. 백엔드 소스 변경이 없어 기존 45개 통과 기록을 이번 재실행으로 표기하지 않는다. DECISIONS의 운영 정책은 TODO 유지. 추가 A 거절 사례·C 사용자 선택·전체 대화 원문은 꾸며 채우지 않는다.
+
+## 2026-10-11 — 반복 측정 중단 조사와 실제 servlet 테스트
+
+- 사용자가 승인한 스크립트를 실행하고 EXTERNAL run `f70323f3-2b6b-4d72-9f7a-a9bf31d23557`, attempts=1, STOPPED를 알려줬다. 생성된 원본에서 REQUEST_TIMEOUT 30,004.22323ms(n=1), HTTP 코드 미관측, reason CANCELLED, 예정 3/미실행 2를 확인했다. revision은 0debad5였다. 원본 SHA-256·민감 필드 미포함을 검증했고 추가 외부 호출은 하지 않았다.
+- **실제 AI 구현 누락:** StreamingResponseBody의 servlet async timeout을 실험 deadline과 구분해 설정하지 않았다. 기존 단위/MockMvc 테스트는 실제 컨테이너의 timeout interrupt를 실행하지 않으므로 이 충돌을 놓쳤다.
+- **재현:** H2·loopback 모의 API·실제 embedded Tomcat에서 MVC async 제한을 100ms로 짧게 잡았다. 신규 테스트 2개 중 반복 GET 완료 테스트 1개가 COMPLETED 기대/STOPPED 실제로 실패했고 AsyncRequestTimeoutException 로그가 발생했다. 운영에도 같은 원인이 작용했을 가능성은 있지만 운영 로그 확인 전 확정하지 않는다. 외부 API의 응답 미완료 원인은 별도 미확정이다.
+- **수정과 이유:** 해당 Lab 실행 요청의 servlet 제한만 durationMs+5초로 설정하고 timer 발생 시 STREAM_TIMEOUT으로 표시한다. 이 여유는 종료 이벤트 전송용 임시 보호값이며 외부 성능 실측을 근거로 정한 정책이 아니다. 전역 timeout·보안·DB·외부 요청 제한은 변경하지 않았다.
+- **실제 검증:** 수정 후 반복 요청의 timeout 관측 2개가 완료되고 실험 deadline에서는 미실행 2개와 DURATION_LIMIT/최종 이벤트가 보존되는 실제 servlet 테스트 2개가 통과했다. Maven package 전체 47개 테스트 실패/오류/skip 0, JAR 빌드 성공. H2·loopback 시험만 했으며 사용자 운영 재배포는 대기 중이다.
+- **Excel:** 실제 원본 2개 실행/2관측으로 갱신했다. 조건별 n=1을 구분하고 예정·시작·종료·미실행 개수를 Runs에 추가했다. 보존되지 않은 HTTP 200 화면 관측을 합산하지 않았다. 수식 오류 검사 0건, 후보 입력 변경 검증, 시각 렌더링 한계 유지. DECISIONS 정책 TODO를 자동 변경하지 않았다.
