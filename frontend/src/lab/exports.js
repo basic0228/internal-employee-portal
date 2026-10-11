@@ -1,4 +1,5 @@
 import { summarize, statistics, display, timeoutComparison, retryComparison, pollingComparison } from './analysis.js'
+import { retryEvidence } from './followup.js'
 
 export function configuration(decisions) {
   const settings = new Map(decisions.map(d => [d.setting, d.value]))
@@ -26,7 +27,7 @@ background-check:
 `
 }
 export function csv(result) {
-  const fields = ['sequence','endpoint','concurrency','outcome','httpCode','elapsedMs','queueWaitMs','startedAt','endedAt','httpVersion','checkRef','status','issues']
+  const fields = ['sequence','logicalOperationId','retryIndex','endpoint','concurrency','groupWidth','requestTimeoutMs','outcome','httpCode','elapsedMs','queueWaitMs','startedAt','endedAt','httpVersion','checkRef','status','issues']
   const cell = v => {
     const s = Array.isArray(v) ? v.join('|') : String(v ?? '')
     return '"' + (/^[=+\-@]/.test(s) ? "'" : '') + s.replaceAll('"','""') + '"'
@@ -48,6 +49,7 @@ export function markdown(result, decisions, candidates, cohort = 'ALL') {
 - 출처: ${result.run.source}
 - 실행 상태/중단: ${result.run.state} / ${result.run.reason || '없음'}
 - 조건: ${JSON.stringify(result.run.conditions)}
+- 후속 프로토콜: ${JSON.stringify(result.run.protocol || null)}
 - 환경/버전: ${result.run.javaVersion} / ${result.run.client} / ${result.run.revision}
 - HTTP 통계 대상: ${cohort}; 대상 시도 n=${s.n}, 완료 HTTP n=${s.http.n}, 전송 중단 n=${s.abort.n}; 실행 전체 시도 n=${result.attempts.length}
 - 아래 전체 요약은 Endpoint가 혼합될 수 있음. Endpoint별 통계와 함께 해석.
@@ -81,6 +83,15 @@ ${(result.workflows || []).map(w => `- ${w.checkRef} (n=1): ${w.state}, 업무=$
 
 ## 반복 POST
 ${JSON.stringify(result.postComparison || {})}
+
+## 실제 재시도 근거 (HTTP와 논리 작업 분리)
+${JSON.stringify(retryEvidence(result))}
+${(result.logicalOperations || []).map(o => `- ${JSON.stringify(o)}`).join('\n') || '적격 초기 실패·실제 retry 관측 없음. 추가 실험 필요.'}
+회복 비율의 분모는 적격 초기 실패이며 조건부 회복 관측만 기술한다. 실제 후속 시도가 없으면 비율 미확정. 자동 재개·일반 오류 GET을 retry 표본으로 바꾸지 않음. 모의 결과는 외부 실측 근거가 아님.
+
+## 같은 조회의 보수적 전환 관측 구간
+${(result.workflows || []).map(w => `- ${w.checkRef}: [${w.transitionWindowStart || '미확정'}, ${w.transitionWindowEnd || '미확정'}]; ${w.transitionWindowAssumption || '같은 조회 상태 관측만 보존'}`).join('\n')}
+마지막 pending 요청 시작부터 최초 최종 응답 종료까지. 같은 조회·단조 전환 가정의 로컬 관측 구간이며 정확한 업무 완료시각을 대신하지 않음.
 
 ## 명세 대조 (실행 전체 n=${result.attempts.length})
 ${result.attempts.map(a => `- 요청 ${a.sequence}: ${a.issues?.length ? a.issues.join(', ') : a.outcome === 'HTTP_RESPONSE' ? '검사한 필드에서 차이 미관측' : '전송 중단으로 응답 검증 불가'}`).join('\n')}

@@ -148,6 +148,8 @@ X-Candidate-Key 및 비밀번호를 프론트 코드, VITE_* 변수, 문서, 로
 
 ## API Reliability Lab — 로컬 구현
 
+추가 실험은 Lab의 `저장할 실험 계획`에서 선택한다. 정상 상태 확인, 제한 GET 재시도, 기존 pending 관찰, 폴링 간격 비교, 균형 순서 동시성 비교를 제공한다. 각 후속 절차는 한 번 종료하며 미사용 HTTP 예산을 채우지 않는다. [후속 구현·배포 후 실행 안내](docs/LAB_FOLLOWUP_IMPLEMENTATION.md), [설계 근거](docs/LAB_FOLLOWUP_TEST_PLAN.md). 기존 lab_campaigns/lab_runs를 사용하며 추가 SQL·환경변수는 없다. 외부 실측과 운영 설정 확정은 별도다.
+
 다음 작업 순서는 [수동 배포·실측·Excel 분석 안내](docs/DEPLOYMENT_AND_MEASUREMENT_WORKFLOW.md)를 따른다. 배포와 키 입력은 사용자가 직접 수행한다.
 
 관리자 메뉴의 단일 화면에서 GET 순차/동시성, POST 완료 관찰, 동일 employeeId 반복 POST를 실행하고 Type 7 통계·Timeout/Retry/Polling 후보·판단 DRAFT를 확인한다. JSON/CSV/Markdown/YAML 초안을 다운로드할 수 있다. [설계안](docs/API_RELIABILITY_LAB_PLAN.md), [구현·검증·실행 안내](docs/API_RELIABILITY_LAB_IMPLEMENTATION.md).

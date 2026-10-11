@@ -1,0 +1,78 @@
+{
+  "workflows": [],
+  "run": {
+    "runId": "2f8c0183-c5eb-4632-b161-b57c6eb95042",
+    "comparisonGroupId": "2f8c0183-c5eb-4632-b161-b57c6eb95042",
+    "type": "GET_FIXED",
+    "endpoint": "LIST",
+    "targetAlias": "target-1",
+    "source": "EXTERNAL",
+    "startedAt": "2026-10-11T15:14:45.615729513Z",
+    "updatedAt": "2026-10-11T15:14:46.706659068Z",
+    "reason": "OBSERVED_ERROR",
+    "state": "STOPPED",
+    "plannedUpperBound": 6,
+    "started": 1,
+    "notStarted": 5,
+    "finished": 1,
+    "conditions": {
+      "maxConcurrency": 1,
+      "callBudget": 6,
+      "requestTimeoutMs": 10000,
+      "maxPolls": 5,
+      "pollIntervalMs": 5000,
+      "repeats": 6,
+      "connectTimeoutMs": 5000,
+      "durationMs": 120000,
+      "intervalMs": 2000
+    },
+    "javaVersion": "21.0.12.1",
+    "client": "JDK HttpClient HTTP_1_1",
+    "revision": "8c25381425857764c613b477ca91d115e6939999",
+    "specVersion": "1.1.1",
+    "specSha256": "30e38d5a486238827407063b4ca549e67b5f046c8ad40e560d45a1729eb86d24",
+    "quantileMethod": "TYPE_7",
+    "campaignId": "683583f2-e476-4ef1-8ab0-8c961a2f0128",
+    "caseId": "4e299d9e-9efe-4db7-9a5e-9fb2d5f7c75e",
+    "recordingEnabled": true,
+    "partialProtocol": false,
+    "connectionMode": "reusedClient (physical connection reuse not instrumented)",
+    "retryMode": "Application OFF / transparent transport recovery not instrumented"
+  },
+  "postComparison": {},
+  "attempts": [
+    {
+      "attemptId": "eca7672a-aa9e-405d-900c-ed4f75d4d05b",
+      "sequence": 1,
+      "logicalOperationId": "2f8c0183-c5eb-4632-b161-b57c6eb95042/1/1",
+      "endpoint": "LIST",
+      "concurrency": 1,
+      "retryIndex": 0,
+      "groupWidth": 1,
+      "outcome": "HTTP_RESPONSE",
+      "httpCode": 500,
+      "elapsedMs": 1076.649343,
+      "queueWaitMs": 0.146958,
+      "startedAt": "2026-10-11T15:14:45.621189466Z",
+      "endedAt": "2026-10-11T15:14:46.697844759Z",
+      "requestTimeoutMs": 10000,
+      "httpVersion": "HTTP_1_1",
+      "responseBytes": 119,
+      "retryAfter": {
+        "header": null,
+        "headerMs": null,
+        "bodyMs": null,
+        "invalidHeader": false,
+        "conflict": false
+      },
+      "issues": []
+    }
+  ],
+  "phases": [
+    {
+      "n": 1,
+      "concurrency": 1,
+      "elapsedMs": 1083.098507
+    }
+  ]
+}

@@ -136,6 +136,28 @@ class LabRecordingTest {
         assertThat(result.path("attempts").size()).isEqualTo(1);assertThat(api.calls.get()).isEqualTo(1);
         assertThat(result.path("run").path("reason").asText()).isEqualTo("OBSERVED_ERROR");
     }
+    @Test void followupSavesProtocolAndLogicalMetadataButNeverFillsUnusedRetryCapacity() throws Exception {
+        var p=new LabProtocol(LabProtocol.Family.R01,LabProtocol.Variant.SHORT,1,1);
+        var c=new LabCampaignRequest.Case(LabRequest.Type.GET_RETRY,LabRequest.Endpoint.LIST,LabCampaignRequest.Unit.REQUESTS,2,1,5000,30000,2000,5000,6,p);
+        var plan=recordings.create(owner,new LabCampaignRequest(List.of(c)));
+        String id=(String)plan.get("campaignId"),caseId=json.valueToTree(plan).path("cases").get(0).path("caseId").asText();
+        var r=new LabRequest("PRIVATE_TEST_KEY",c.type(),c.endpoint(),"PRIVATE_EMPLOYEE_ID",null,null,null,null,1,1,5000,30000,120000,2000,5000,6,2,false,p,true);
+        var result=execute(r,id,caseId,new ByteArrayOutputStream());
+        assertThat(result.path("logicalOperations").size()).isEqualTo(1);assertThat(result.path("run").path("protocol").path("family").asText()).isEqualTo("R01");
+        assertThat(api.calls.get()).isEqualTo(1);
+        assertThatThrownBy(()->runner.reserve(owner,r,id,caseId)).isInstanceOf(ResponseStatusException.class);
+        assertThat(jdbc.queryForObject("SELECT snapshot_json FROM lab_runs",String.class)).doesNotContain("PRIVATE_TEST_KEY","PRIVATE_EMPLOYEE_ID");
+    }
+    @Test void balancedOrderCannotSkipEarlierLevelsOrContinueAfterFailure() {
+        var cs=new ArrayList<LabCampaignRequest.Case>();
+        for(int order=1;order<=2;order++) cs.add(new LabCampaignRequest.Case(LabRequest.Type.GET_FIXED,LabRequest.Endpoint.LIST,
+            LabCampaignRequest.Unit.REQUESTS,3,order,5000,30000,2000,5000,6,new LabProtocol(LabProtocol.Family.C01,LabProtocol.Variant.DEFAULT,1,order)));
+        var plan=recordings.create(owner,new LabCampaignRequest(cs));String id=(String)plan.get("campaignId");
+        var cases=json.valueToTree(plan).path("cases");var c=cs.get(1);
+        var r=new LabRequest("PRIVATE_TEST_KEY",c.type(),c.endpoint(),"PRIVATE_EMPLOYEE_ID",null,null,null,null,3,2,5000,30000,120000,2000,5000,6,3,false,c.protocol(),true);
+        assertThatThrownBy(()->runner.reserve(owner,r,id,cases.get(1).path("caseId").asText())).isInstanceOf(ResponseStatusException.class);
+        assertThat(api.calls.get()).isZero();
+    }
     MockHttpSession login(String username) throws Exception {
         return (MockHttpSession)mvc.perform(post("/api/auth/login").with(csrf()).param("username",username).param("password","RecordTestPassword1"))
             .andExpect(status().isNoContent()).andReturn().getRequest().getSession(false);

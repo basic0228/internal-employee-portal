@@ -30,9 +30,18 @@ public class LabRecordingService {
         var cases=new ArrayList<Map<String,Object>>();int maxCalls=0;
         for(var c:request.cases()) {
             boolean post=c.type()==LabRequest.Type.CREATE_POLL || c.type()==LabRequest.Type.REPEAT_POST;
-            if ((!post && c.type()!=LabRequest.Type.GET_FIXED) || post!=(c.endpoint()==LabRequest.Endpoint.CREATE)
+            if ((!post && c.type()!=LabRequest.Type.GET_FIXED && c.type()!=LabRequest.Type.GET_RETRY && c.type()!=LabRequest.Type.POLL_EXISTING) || post!=(c.endpoint()==LabRequest.Endpoint.CREATE)
                 || post && c.concurrency()!=1 || c.unit()!=LabCampaignRequest.Unit.REQUESTS)
                 throw error(HttpStatus.BAD_REQUEST,"케이스의 실행 단위·유형·Endpoint를 확인하세요.");
+            if(c.protocol()!=null) {
+                var p=c.protocol();
+                int repeats=Set.of(LabProtocol.Family.B01,LabProtocol.Family.C01,LabProtocol.Family.C02).contains(p.family())?3:1;
+                var probe=new LabRequest("VALID",c.type(),c.endpoint(),"target","check","first","last","1990-01-01",repeats,c.concurrency(),
+                    c.connectTimeoutMs(),c.requestTimeoutMs(),120000,c.intervalMs(),c.pollIntervalMs(),c.maxPolls(),20,true,p,true);
+                LabRunner.validateProtocol(probe);
+                if(c.goal()!=LabRunner.planned(probe)) throw error(HttpStatus.BAD_REQUEST,"후속 계획은 한 절차의 최대 HTTP 예산을 사용합니다.");
+            } else if(c.type()==LabRequest.Type.GET_RETRY || c.type()==LabRequest.Type.POLL_EXISTING)
+                throw error(HttpStatus.BAD_REQUEST,"후속 실험 프로토콜이 필요합니다.");
             maxCalls+=c.goal();
             cases.add(Map.of("caseId",UUID.randomUUID().toString(),"conditions",c));
         }
@@ -61,6 +70,27 @@ public class LabRecordingService {
             LabCampaignRequest.Case config;
             try{config=json.treeToValue(chosen.path("conditions"),LabCampaignRequest.Case.class);}catch(Exception e){throw error(HttpStatus.BAD_REQUEST,"케이스 조건을 읽을 수 없습니다.");}
             if(!config.matches(r)) throw error(HttpStatus.BAD_REQUEST,"저장된 케이스와 실행 조건이 다릅니다.");
+            if(config.protocol()!=null) {
+                // A pilot ends with the procedure, not with filling unused conditional HTTP capacity.
+                var rows=mapper.campaignRuns(campaignId,owner);
+                if(rows.stream().anyMatch(row->Objects.equals(row.caseId(),caseId)))
+                    throw error(HttpStatus.CONFLICT,"이미 실행한 탐색 절차입니다. 검토 후 새 계획으로 명시적으로 다시 실행하세요.");
+                boolean ordered=Set.of(LabProtocol.Family.R01,LabProtocol.Family.R03,LabProtocol.Family.C01,LabProtocol.Family.C02).contains(config.protocol().family());
+                if(ordered) {
+                    JsonNode previous=null;
+                    for(var c:plan(owner,campaignId).path("cases")) {if(c.path("caseId").asText().equals(caseId)) break;previous=c;}
+                    if(previous!=null) {
+                        String priorId=previous.path("caseId").asText();
+                        var prior=rows.stream().filter(row->Objects.equals(row.caseId(),priorId)).findFirst().orElse(null);
+                        if(prior==null || !"COMPLETED".equals(prior.status())) throw error(HttpStatus.CONFLICT,"앞 절차가 정상 완료되어야 다음 비교를 실행할 수 있습니다.");
+                        if(config.protocol().family()==LabProtocol.Family.C01 || config.protocol().family()==LabProtocol.Family.C02) {
+                            var ended=LabRunner.instant(parse(prior.snapshotJson()).path("run").path("updatedAt"));
+                            if(ended==null || java.time.Instant.now().isBefore(ended.plusSeconds(30)))
+                                throw error(HttpStatus.CONFLICT,"동시성 수준 사이에 30초 보호 대기가 필요합니다.");
+                        }
+                    }
+                }
+            }
             int used=0;
             for(var stored:mapper.campaignRuns(campaignId,owner)) if(Objects.equals(stored.caseId(),caseId)) {
                 if("RUNNING".equals(stored.status())) throw error(HttpStatus.CONFLICT,"실행 중이거나 최종 상태가 미확정인 차수가 있습니다. 자동 재개하지 않습니다.");
@@ -68,7 +98,7 @@ public class LabRecordingService {
             }
             int next=LabRunner.planned(r);
             if(used+next>config.goal()) throw error(HttpStatus.BAD_REQUEST,"케이스 목표 횟수를 초과합니다.");
-            if(config.type()==LabRequest.Type.CREATE_POLL && r.maxPolls()!=Math.min(config.maxPolls(),config.goal()-used-1))
+            if(config.protocol()==null && config.type()==LabRequest.Type.CREATE_POLL && r.maxPolls()!=Math.min(config.maxPolls(),config.goal()-used-1))
                 throw error(HttpStatus.BAD_REQUEST,"폴링 예산은 남은 HTTP 목표에 맞춰야 합니다.");
         }
         var initial=Map.of("run",Map.of("runId",runId,"source","UNSTARTED","state","RUNNING"),"attempts",List.of());

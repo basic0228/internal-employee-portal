@@ -11,12 +11,17 @@ public record LabCampaignRequest(@NotEmpty @Size(max=12) List<@NotNull @Valid Ca
             @NotNull Unit unit,@Min(1) @Max(100) int goal,
             @Min(1) @Max(3) int concurrency,@Min(1) @Max(30000) int connectTimeoutMs,
             @Min(1) @Max(60000) int requestTimeoutMs,@Min(0) @Max(10000) int intervalMs,
-            @Min(1) @Max(60000) int pollIntervalMs,@Min(1) @Max(19) int maxPolls) {
+            @Min(1) @Max(60000) int pollIntervalMs,@Min(1) @Max(19) int maxPolls,
+            @Valid LabProtocol protocol) {
+        public Case(LabRequest.Type type,LabRequest.Endpoint endpoint,Unit unit,int goal,int concurrency,int connect,int timeout,int interval,int poll,int maxPolls) {
+            this(type,endpoint,unit,goal,concurrency,connect,timeout,interval,poll,maxPolls,null);
+        }
         public boolean matches(LabRequest r) {
             return type==r.type() && endpoint==r.endpoint() && concurrency==r.concurrency()
                 && connectTimeoutMs==r.connectTimeoutMs() && requestTimeoutMs==r.requestTimeoutMs()
                 && intervalMs==r.intervalMs() && pollIntervalMs==r.pollIntervalMs()
-                && (type==LabRequest.Type.CREATE_POLL ? r.maxPolls()>=0 && r.maxPolls()<=maxPolls : maxPolls==r.maxPolls());
+                && java.util.Objects.equals(protocol,r.protocol())
+                && (type==LabRequest.Type.CREATE_POLL && protocol==null ? r.maxPolls()>=0 && r.maxPolls()<=maxPolls : maxPolls==r.maxPolls());
         }
     }
 }

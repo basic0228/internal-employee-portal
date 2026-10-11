@@ -78,6 +78,8 @@ preview는 H2 메모리 DB와 테스트 클래스의 모의 API만 사용하며 
 
 ## 예상 면접 질문
 
+2026-10-12 후속 업데이트: [LAB_FOLLOWUP_IMPLEMENTATION.md](LAB_FOLLOWUP_IMPLEMENTATION.md)에 명시적 GET 재시도·기존pending polling·균형블록 비교·서버 저장·실제 회복 분모를 추가했다. 위 최초 구현의 Retry OFF/미구현 목록은 당시 범위이며 새 Lab 실험은 제한된 opt-in 예외다. 일반 업무 운영 설정은 여전히 TODO다.
+
 1. 헤더를 받은 뒤 본문이 멈추면 timeout은 어떻게 보장하는가?
 2. 타임아웃 표본을 p99 계산에서 제외하면 어떤 편향이 생기는가?
 3. POST 타임아웃 후 왜 자동 재전송을 하지 않는가?

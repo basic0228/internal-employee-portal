@@ -11,6 +11,7 @@ import { streamExperiment } from '../lab/stream'
 import { api, errorMessage, postWithCsrf } from '../api/portal'
 import { statistics, summarize, timeoutComparison, retryComparison, pollingComparison, display } from '../lab/analysis'
 import { configuration, csv, markdown, download } from '../lab/exports'
+import { retryEvidence } from '../lab/followup'
 
 const props = defineProps({ employees: { type: Array, default: () => [] } })
 defineEmits(['close'])
@@ -39,6 +40,7 @@ const timeout = computed(() => timeoutComparison(filtered.value, candidates.time
 const retry = computed(() => retryComparison({ ...candidates.retry, statuses: candidates.retryStatuses.split(',').map(s => Number(s.trim())).filter(n => n >= 100 && n <= 599) }, filtered.value))
 const polling = computed(() => pollingComparison(result.value?.workflows || [], candidates.pollIntervalMs, candidates.pollMax, candidates.pollDurationMs))
 const business = computed(() => statistics((result.value?.workflows || []).map(w => w.businessDurationMs).filter(v => Number.isFinite(v) && v >= 0)))
+const recovery = computed(() => retryEvidence(result.value))
 const latencyPlot = computed(() => {
   const rows = filtered.value.filter(a => Number.isFinite(a.elapsedMs)).slice().sort((a,b) => Date.parse(a.startedAt)-Date.parse(b.startedAt))
   const max = Math.max(1, ...rows.map(a => a.elapsedMs))
@@ -209,6 +211,8 @@ function save(kind) {
       <h4>배경 조회 업무 처리시간</h4><p>업무 평균 {{ display(business.mean) }}ms / 완료 시각 표본 n={{ business.n }} · 관측 업무 전체 n={{ result?.workflows?.length || 0 }}. 완료 표본만의 통계이며 미완료 건은 별도입니다.</p>
       <DataTable :value="result?.workflows || []"><Column field="checkRef" header="조회 별칭" /><Column field="state" header="관측 종료" /><Column field="businessDurationMs" header="서버 업무 ms" /><Column field="observedPendingToFinalMs" header="pending→발견 ms" /><Column field="finalStatus" header="최종 상태" /></DataTable>
       <p>서버 createdAt/completedAt이 없으면 정확한 업무 완료시간은 추가 실험 필요입니다. 발견 시각으로 대체하지 않습니다.</p>
+      <DataTable v-if="result?.run?.protocol" :value="result?.workflows || []"><Column field="checkRef" header="같은 조회 별칭"/><Column field="transitionWindowStart" header="마지막 pending 요청 시작"/><Column field="transitionWindowEnd" header="최초 최종 응답 종료"/></DataTable>
+      <p v-if="result?.run?.protocol">전환 구간은 같은 조회가 pending→최종으로 단조 전환한다는 가정의 보수적 로컬 관측 범위입니다. 실제 완료 시각이나 서버 간 시계 차이를 대신하지 않습니다.</p>
       <h4>반복 POST</h4><pre>{{ result?.postComparison && Object.keys(result.postComparison).length ? JSON.stringify(result.postComparison,null,2) : '추가 실험 필요' }}</pre>
       <h4>명세 대조</h4><DataTable :value="findings"><Column field="sequence" header="요청" /><Column field="n" header="n" /><Column field="result" header="대조 결과" /></DataTable>
       <p>코드·JSON·필드·enum·ID·시각만 검사합니다. EXPECTED_*는 앱 필요 조건이며 Swagger의 required 선언과 구분합니다. 관찰하지 않은 명세 동작은 TODO입니다.</p>
@@ -219,7 +223,11 @@ function save(kind) {
       <h4>Timeout 후보</h4><div class="lab-field"><label for="candidate-timeout">후보 전체 요청 제한 ms</label><InputNumber inputId="candidate-timeout" v-model="candidates.timeoutMs" :min="1" /></div>
       <p>완료 HTTP 초과 {{ timeout.httpExceeds }}/{{ timeout.httpN }} ({{ display(timeout.httpRatio) }}%) · 전체 n={{ timeout.n }}에서 확정 초과 {{ timeout.exceeds }}, 비초과 {{ timeout.within }}, 미확정 {{ timeout.unknown }}.</p>
       <p>p95={{ display(summary.http.p95) }}ms, p99={{ display(summary.http.p99) }}ms / n={{ summary.http.n }}. 짧으면 조기 중단·재호출 부담, 길면 리소스 점유·대기가 증가합니다. 연결 단계 시간은 계측하지 않아 connect-timeout 판단은 추가 실험 필요입니다.</p>
-      <h4>Retry 후보 — 성공률은 추가 실험 필요</h4><div class="lab-grid">
+      <h4>실제 Retry 관측 (현재 실행)</h4>
+      <p>논리 작업 n={{recovery.n}}, 적격 초기 실패 n={{recovery.eligibleN}}, 후속 시작 작업 n={{recovery.followupN}}, 예산 내 정상 회복 n={{recovery.recoveredN}}, 예산 부족 미실행 n={{recovery.deferredN}}, 추가 HTTP {{recovery.retryCalls}}건. 관측 회복 비율 {{display(recovery.recoveryPercent)}}%. 적격 실패가 없거나 실제 후속 시도가 없으면 비율을 계산하지 않습니다. 중단·미완료를 함께 보고하며 운영 성공률이나 인과적 개선으로 해석하지 않습니다.</p>
+      <DataTable :value="result?.logicalOperations || []"><Column field="logicalOperationId" header="논리 작업"/><Column field="eligibleInitialFailure" header="초기 적격 실패"/><Column field="retriesStarted" header="추가 시도 n"/><Column field="recovered" header="정상 회복"/><Column field="result" header="종료"/></DataTable>
+      <p v-for="operation in result?.logicalOperations || []" :key="operation.logicalOperationId">예정/실제 대기: {{JSON.stringify(operation.waits)}}. 원본 JSON에 시도별 retryIndex와 같은 logicalOperationId를 보존합니다.</p>
+      <h4>Retry 후보 — 가정한 대기 모델</h4><div class="lab-grid">
         <div class="lab-field"><label for="retry-codes">대상 HTTP 코드 (쉼표 구분)</label><InputText id="retry-codes" v-model="candidates.retryStatuses" placeholder="직접 선택" /></div>
         <div class="lab-field"><label for="retry-count">최대 추가 시도 수 R</label><InputNumber inputId="retry-count" v-model="candidates.retry.retries" :min="0" :max="10" /></div>
         <div class="lab-field"><label for="retry-initial">초기 대기 ms</label><InputNumber inputId="retry-initial" v-model="candidates.retry.initialMs" :min="0" /></div>

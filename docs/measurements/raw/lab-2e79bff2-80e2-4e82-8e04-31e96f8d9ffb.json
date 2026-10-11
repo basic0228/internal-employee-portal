@@ -1,0 +1,78 @@
+{
+  "attempts": [
+    {
+      "attemptId": "0d842af5-3ff6-4bd1-b4a2-35a54001ce87",
+      "sequence": 1,
+      "logicalOperationId": "2e79bff2-80e2-4e82-8e04-31e96f8d9ffb/1/1",
+      "endpoint": "LIST",
+      "concurrency": 1,
+      "retryIndex": 0,
+      "groupWidth": 1,
+      "outcome": "HTTP_RESPONSE",
+      "httpCode": 503,
+      "elapsedMs": 30542.319441,
+      "queueWaitMs": 0.141206,
+      "startedAt": "2026-10-11T14:47:03.049431231Z",
+      "endedAt": "2026-10-11T14:47:33.591755101Z",
+      "requestTimeoutMs": 60000,
+      "httpVersion": "HTTP_1_1",
+      "responseBytes": 33,
+      "retryAfter": {
+        "header": null,
+        "headerMs": null,
+        "bodyMs": null,
+        "invalidHeader": false,
+        "conflict": false
+      },
+      "issues": []
+    }
+  ],
+  "phases": [
+    {
+      "elapsedMs": 30568.631522,
+      "n": 1,
+      "concurrency": 1
+    }
+  ],
+  "workflows": [],
+  "run": {
+    "runId": "2e79bff2-80e2-4e82-8e04-31e96f8d9ffb",
+    "comparisonGroupId": "2e79bff2-80e2-4e82-8e04-31e96f8d9ffb",
+    "type": "GET_FIXED",
+    "endpoint": "LIST",
+    "targetAlias": "target-1",
+    "source": "EXTERNAL",
+    "startedAt": "2026-10-11T14:47:03.030696802Z",
+    "updatedAt": "2026-10-11T14:47:33.634640491Z",
+    "reason": "RETRY_AFTER_OR_OVERLOAD",
+    "state": "STOPPED",
+    "plannedUpperBound": 1,
+    "started": 1,
+    "notStarted": 0,
+    "finished": 1,
+    "conditions": {
+      "pollIntervalMs": 5000,
+      "repeats": 1,
+      "connectTimeoutMs": 5000,
+      "durationMs": 120000,
+      "intervalMs": 2000,
+      "maxConcurrency": 1,
+      "callBudget": 1,
+      "requestTimeoutMs": 60000,
+      "maxPolls": 5
+    },
+    "javaVersion": "21.0.12.1",
+    "client": "JDK HttpClient HTTP_1_1",
+    "revision": "8c25381425857764c613b477ca91d115e6939999",
+    "specVersion": "1.1.1",
+    "specSha256": "30e38d5a486238827407063b4ca549e67b5f046c8ad40e560d45a1729eb86d24",
+    "quantileMethod": "TYPE_7",
+    "campaignId": "683583f2-e476-4ef1-8ab0-8c961a2f0128",
+    "caseId": "f5e6a4f2-ac8d-4a0f-95de-129d89aad6e7",
+    "recordingEnabled": true,
+    "partialProtocol": false,
+    "connectionMode": "reusedClient (physical connection reuse not instrumented)",
+    "retryMode": "Application OFF / transparent transport recovery not instrumented"
+  },
+  "postComparison": {}
+}

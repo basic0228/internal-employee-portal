@@ -22,9 +22,18 @@ public final class MockBackgroundApi implements AutoCloseable {
         server.setExecutor(threads);server.createContext("/background-checks",this::handle);server.start();
     }
     public String baseUrl() { return "http://127.0.0.1:"+server.getAddress().getPort(); }
+    public void seedPending(String employee) {
+        var item=new ConcurrentHashMap<String,Object>();
+        item.put("checkId","PRIVATE-PENDING-ID");item.put("employeeId",employee);item.put("status","pending");
+        item.put("createdAt",Instant.now().minusSeconds(2).toString());checks.put("PRIVATE-PENDING-ID",item);
+    }
     private void handle(HttpExchange x) throws IOException {
-        calls.incrementAndGet();int live=inflight.incrementAndGet();maxInflight.accumulateAndGet(live,Math::max);
+        int number=calls.incrementAndGet();int live=inflight.incrementAndGet();maxInflight.accumulateAndGet(live,Math::max);
         try {
+            if("RETRY_ONCE".equals(mode) && number==1 || "RETRY_TWICE".equals(mode) && number<=2) {send(x,500,Map.of("error","Internal Server Error"));return;}
+            if("OVERLOAD_ONCE".equals(mode) && number==1) {x.getResponseHeaders().add("Retry-After","2");send(x,503,Map.of("retryAfter",3));return;}
+            if("OVERLOAD_LONG".equals(mode)) {x.getResponseHeaders().add("Retry-After","120");send(x,503,Map.of("retryAfter",120));return;}
+            if("RATE_LIMIT".equals(mode)) {send(x,429,Map.of("error","Rate Limit"));return;}
             if("UNAUTHORIZED".equals(mode)) { send(x,401,Map.of("error","Unauthorized"));return; }
             if("OVERLOAD".equals(mode)) { x.getResponseHeaders().add("Retry-After","2");send(x,503,Map.of("retryAfter",3));return; }
             if("NOT_FOUND".equals(mode)) { send(x,404,Map.of("error","Not Found"));return; }
@@ -46,6 +55,7 @@ public final class MockBackgroundApi implements AutoCloseable {
                 item.put("firstName",input.path("firstName").asText());item.put("lastName",input.path("lastName").asText());
                 item.put("dateOfBirth",input.path("dateOfBirth").asText());item.put("createdAt",Instant.now().minusSeconds(1).toString());
                 item.put("estimatedCompletionSeconds",1);
+                if("IMMEDIATE_FINAL".equals(mode)) {item.put("status","clear");item.put("completedAt",Instant.now().toString());}
                 checks.put(id,item);send(x,201,item);return;
             }
             if(path.equals("/background-checks")) {
@@ -58,7 +68,9 @@ public final class MockBackgroundApi implements AutoCloseable {
             if(item==null) item=new HashMap<>(Map.of("checkId",id,"employeeId","EMP-001","status","clear",
                     "createdAt","2026-01-01T00:00:00Z","completedAt","2026-01-01T00:00:01Z","firstName","MOCK_PRIVATE_NAME","criminalRecord",false));
             else {
-                item.put("status","clear");item.put("completedAt",Instant.now().toString());
+                if(!"PENDING_FOREVER".equals(mode) && !("PENDING_THEN_FLAGGED".equals(mode) && number<=2)) {
+                    item.put("status","PENDING_THEN_FLAGGED".equals(mode)?"flagged":"clear");item.put("completedAt",Instant.now().toString());
+                }
             }
             send(x,200,item);
         } finally { inflight.decrementAndGet();x.close(); }
