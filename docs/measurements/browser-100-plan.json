@@ -1,0 +1,19 @@
+{
+  "planId": "browser-get-100-20261011",
+  "requestedAttempts": 100,
+  "state": "STOPPED_RECOVERY_CHECK_FAILED",
+  "executionSurface": "DEPLOYED_BROWSER",
+  "endpoint": "LIST",
+  "runIds": [
+    "50c4afc0-a755-49f6-8ea1-1c6821f54ce9",
+    "0664760e-a7c2-49f4-8110-b49a75175cac"
+  ],
+  "recoveryRunIds": ["0664760e-a7c2-49f4-8110-b49a75175cac"],
+  "notes": [
+    "User requested 100 total GET observations; previous runs are excluded from this plan.",
+    "Initial batch was limited to five attempts; server stopped after two on HTTP 503/body retryAfter.",
+    "User authorized one recovery check after the observed wait hint, then resumption only if successful.",
+    "Recovery check timed out; no further calls were made. Counts are derived from raw exports.",
+    "Run-local notStarted counts do not represent the entire plan's unexecuted attempts."
+  ]
+}

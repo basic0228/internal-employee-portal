@@ -9,6 +9,8 @@ portal:
 lab:
   enabled: ${LAB_ENABLED:false}
   post-enabled: ${LAB_POST_ENABLED:false}
+  # Requires additive V4 migration; disabled preserves the existing deployment until reviewed.
+  recording-enabled: ${LAB_RECORDING_ENABLED:false}
 background-check:
   external-enabled: ${BG_EXTERNAL_ENABLED:false}
   enabled: ${BG_ENABLED:false}

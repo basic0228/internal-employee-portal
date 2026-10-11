@@ -51,7 +51,7 @@ pwsh -NoProfile -File "C:\workspace\internal-employee-portal\scripts\measure-lab
 
 이번 Windows 런타임의 이미지 렌더러는 `Failed to resolve Vulkan proc vkEnumerateInstanceVersion`으로 실패했다. `--no-render`로 계산 검증·XLSX 저장은 성공했으나 화면 배치 검증은 미완료다. 렌더링 가능한 환경에서는 옵션을 빼고 생성된 시트 PNG를 직접 확인한다.
 
-갱신한 초안은 첫 외부 타임아웃 원본과 스크립트 중단 원본, 총 2개 실행의 실제 관측 2건을 포함한다. 두 번째 브라우저 HTTP 200은 화면 관측만 남았으므로 JSON으로 재구성하거나 Excel 원본 표본에 합산하지 않았다. 실행별 조건을 분리하고 Runs에 예정·시작·종료·미실행 n을 기록한다. 평균·Type 7 백분위수는 원본 기반 계산 스냅샷이다. 새 원본이 생기면 빌더를 다시 실행한다. 개수·비율·후보 비교는 Excel 수식이며 후보 셀 입력 변경을 검증했다.
+현재 초안은 원본 6개 실행의 실제 관측 7건(타임아웃 4/HTTP 200 2/HTTP 503 1)을 포함한다. 기록 조건·버전·collection batch가 같은 이전 완료 2건의 기술 통계는 별도로 유지한다. 원본이 없는 브라우저 HTTP 200 2건은 JSON으로 재구성하거나 Excel 원본 표본에 합산하지 않았다. 실행별 조건을 분리하고 Runs에 예정·시작·종료·미실행 n을 기록한다. 평균·Type 7 백분위수는 원본 기반 계산 스냅샷이다. 새 원본이 생기면 빌더를 다시 실행한다. 개수·비율·후보 비교는 Excel 수식이며 후보 셀 입력 변경과 원본별 오류 개수·중단 평균 대조를 검증했다.
 
 ## 정책 근거와 남은 검증
 
@@ -68,3 +68,32 @@ JSON 다운로드 보완은 DOM에 연결한 링크와 URL 수명 연장, `JSON 
 LabController의 해당 실행 요청에만 `durationMs + 5,000ms`를 설정했다. 추가 5초는 실행 종료·최종 이벤트 전송 여유이며 외부 지연 실측으로 결정한 값이 아니다. 외부 개별 요청과 실험 자체의 deadline은 유지한다. 혹시 이 응답 제한까지 도달하면 STREAM_TIMEOUT으로 구분한다. 글로벌 application.yml·쿠키·프록시·보안·DB 설정은 바꾸지 않았다.
 
 수정 후 실제 servlet 반복 timeout 관측 완료와 실험 deadline 중단/최종 이벤트 보존 테스트가 통과했다. Maven package에서 전체 47개 테스트가 통과했다. 운영 로그는 아직 확인하지 않았으며, 운영 CANCELLED가 이 메커니즘이었다는 결론과 배포 후 정상 동작은 별도 검증 대상이다.
+
+## 후속 승인 계획 결과
+
+사용자가 자동 배포 켜짐을 확인한 뒤 Rounds=2/Repeats=1/동시성 1/연결 5초/요청 30초/차수 40초/차수 사이 설정 대기 2초 계획을 승인·실행했다. `2bc4b99c-502d-4f1b-9fbb-9a767c193833` 및 `7766daec-5f98-450b-89b8-7cd18f4683d2`는 revision 5070013, 각 HTTP 200(n=1), 총 완료 HTTP n=2다. 지연 14,084.269291ms와 2,373.46457ms를 원본으로 확인했다.
+
+서버 원본 시각상 첫 요청 종료→다음 시작이 약 230.206초다. 설정 sleep 2초와 실제 요청 간격을 구분한다. 원인은 미확정이며 클라이언트 단계별 추가 계측 전 연결 재사용/cold start로 설명하지 않는다. 두 실행 모두 30초 내 완료했으므로 30초 이상 운영 스트리밍을 검증했다고 표시하지 않는다.
+
+사용자는 별도 조작 없이 기다렸다고 확인했고 로컬 네트워크 영향 가능성을 언급했다. PC↔Railway 통신은 차수 사이 시간에 영향을 줄 수 있다. Railway→외부 API 요청의 서버 elapsedMs와 구분해서 분석하며 원인은 미확정으로 남긴다.
+
+## 배포 브라우저 100회 계획의 중단 및 오프라인 근거
+
+사용자가 브라우저 100회 시행을 요청했다. 첫 5회 차수에서 실제 2회만 실행한 뒤 503/body retryAfter=30초에서 서버가 중단했다. 사용자 선택에 따라 안내 대기 이후 단일 회복 확인을 했으나 30초 timeout으로 실패했다. 실제 3회/미실행 97회다. 기존 스크립트의 전체 예산 10을 우회하거나 서버 상한을 변경한 것이 아니다.
+
+`docs/measurements/browser-100-plan.json`에는 요청한 횟수와 이번 계획의 runId를 기록한다. `scripts/lab-evidence.mjs`가 원본에서 실제 n을 계산하며, `lab-export-xlsx.mjs --plan <파일>` 옵션으로 항목별 근거를 추가한다. Summary에는 계획/실제 횟수와 조건별 정상·오류 지연을, Evidence에는 10개 항목의 근거/표본 수/추가 검증/TODO를, Candidates에는 5·10·15·20·30초 고정 후보 재분류를 기록한다. 표준 XLSX의 원본 표에는 이전 실행도 남지만 계획 집계는 지정한 runId만 사용한다. 회복 확인을 일반 재시도 성공률로 계산하지 않는다. 타임아웃 경과와 503의 본문 수신 지연은 성공 지연과 분리한다.
+
+```powershell
+$labSourcePaths = Get-ChildItem -LiteralPath docs/measurements/raw -Filter 'lab-*.json' | Sort-Object Name | Select-Object -ExpandProperty FullName
+& 'C:/Users/lilie/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node.exe' scripts/lab-export-xlsx.mjs outputs/01a124de-b755-76c1-a212-a325ffee9c34/api-reliability-lab.xlsx @labSourcePaths --no-render --plan docs/measurements/browser-100-plan.json
+& 'C:/Users/lilie/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node.exe' --test scripts/lab-evidence.test.mjs
+```
+
+위 명령은 보존된 JSON만 읽으며 API를 호출하지 않는다. 원본 테스트 5개(실제 n, 성공/오류 분리, 미관측 코드, 회복 실패, 중복/누락/예산 초과)가 통과했다. 배포 JSON fallback의 읽기 전용 값을 원본으로 저장하는 경로는 확인했으나, 브라우저 download 이벤트를 통한 저장은 여전히 별도 확인 대상이다.
+# 케이스별 100 HTTP 요청 계획/서버 자동 저장
+
+`docs/LAB_CAMPAIGN_PLAN.md` 참조. 관리자 단일 Lab 화면에서 GET 9조건/Polling/중복 POST 계획을 저장하고 한 케이스씩 실행한다. 목표는 POST 업무 실행 수가 아니라 POST·Polling GET·전후 이력 GET·오류까지 포함한 실제 HTTP 관측 수다. `lab_campaigns`/`lab_runs` 저장에 V4와 LAB_RECORDING_ENABLED가 필요하다.
+
+계획별 JSON 내보내기는 `{plan,runs:[{runId,caseId,campaignId,recordingStatus,stale,result}]}` 구조다. `result`는 기존 실행 원본 구조이고 출처(LOCAL_MOCK/EXTERNAL)를 유지한다. 키·가상 대상·개인정보·외부 상세는 제외된다. 계획별 상세 조회는 전체 차수를 포함한다. 최근 저장 목록의 100차수 제한과 케이스의 HTTP 100건 목표를 구분한다.
+
+기존 오프라인 Excel builder/GET plan 분석은 단일 run 원본 및 기존 GET 계획 입력 방식이다. **새 캠페인 묶음/POST·Polling 항목별 Excel 자동 집계는 TODO**다. 새 실측 확보 전 표본을 생성하지 않는다. 브라우저의 기존 단일 run 분석/JSON/CSV/Markdown 내보내기는 저장된 실행을 불러와 사용할 수 있다.

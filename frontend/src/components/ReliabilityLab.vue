@@ -6,6 +6,8 @@ import InputNumber from 'primevue/inputnumber'
 import Message from 'primevue/message'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
+import LabCampaignPanel from './LabCampaignPanel.vue'
+import { streamExperiment } from '../lab/stream'
 import { api, errorMessage, postWithCsrf } from '../api/portal'
 import { statistics, summarize, timeoutComparison, retryComparison, pollingComparison, display } from '../lab/analysis'
 import { configuration, csv, markdown, download } from '../lab/exports'
@@ -13,6 +15,7 @@ import { configuration, csv, markdown, download } from '../lab/exports'
 const props = defineProps({ employees: { type: Array, default: () => [] } })
 defineEmits(['close'])
 const caps = ref(null), busy = ref(false), error = ref(''), result = ref(null), events = ref(0), cohort = ref('ALL')
+const campaignBusy = ref(false)
 let abort
 const form = reactive({ candidateKey: '', type: 'GET_BASELINE', endpoint: 'DETAIL', employeeId: '', checkId: '',
   firstName: '', lastName: '', dateOfBirth: '', repeats: 5, concurrency: 1,
@@ -46,7 +49,7 @@ const findings = computed(() => allAttempts.value.map(a => ({ sequence: a.sequen
   result: a.outcome !== 'HTTP_RESPONSE' ? '응답 관찰 불가' : a.issues?.length ? a.issues.join(', ') : '검사 항목 차이 미관측' })))
 const settings = ['connect-timeout-ms','request-timeout-ms','retry-statuses','max-retries','retry-backoff','retry-initial-delay-ms',
   'retry-max-delay-ms','respect-retry-after','retry-max-duration-ms','polling-interval-ms','polling-max-attempts','polling-max-duration-ms','max-in-flight']
-const valid = computed(() => caps.value?.enabled && form.candidateKey.trim() && planned.value <= form.callBudget &&
+const valid = computed(() => !campaignBusy.value && caps.value?.enabled && form.candidateKey.trim() && planned.value <= form.callBudget &&
   (!isPost.value || caps.value.postEnabled && form.postAcknowledged && form.firstName && form.lastName && form.dateOfBirth) &&
   (form.endpoint === 'DETAIL' ? form.checkId : form.employeeId))
 onMounted(async () => { try { caps.value = (await api.get('/admin/reliability-lab/capabilities')).data } catch (e) { error.value = errorMessage(e) } })
@@ -70,35 +73,14 @@ function acceptEvent(event) {
   if (event.type === 'result') result.value = event.data
 }
 async function execute() {
+  if (campaignBusy.value) return
   error.value = ''; busy.value = true; result.value = null; decisions.value = []; events.value = 0; showJson.value = false
   cohort.value = isPost.value && form.type === 'CREATE_POLL' ? 'DETAIL' : form.endpoint
   abort = new AbortController()
   try {
-    const { data: token } = await api.get('/auth/csrf')
-    const body = JSON.stringify({ ...form, candidateKey: form.candidateKey.trim() })
+    const body = { ...form, candidateKey: form.candidateKey.trim() }
     form.candidateKey = ''
-    const response = await fetch('/api/admin/reliability-lab/experiments', { method: 'POST', credentials: 'same-origin',
-      headers: { 'Content-Type': 'application/json', [token.headerName]: token.token }, body, signal: abort.signal })
-    if (!response.ok) {
-      if (response.status === 401) await api.get('/auth/me')
-      const message = await response.json().catch(() => ({}))
-      throw new Error(message.message || '실험을 시작할 수 없습니다. 권한·CSRF·서버 설정을 확인하세요.')
-    }
-    const reader = response.body.getReader(), decoder = new TextDecoder()
-    let pending = '', finalReceived = false
-    while (true) {
-      const { done, value } = await reader.read()
-      pending += decoder.decode(value || new Uint8Array(), { stream: !done })
-      const lines = pending.split('\n'); pending = lines.pop()
-      for (const line of lines) if (line.trim()) {
-        const event = JSON.parse(line); acceptEvent(event); if (event.type === 'result') finalReceived = true
-      }
-      if (done) {
-        if (pending.trim()) { const event = JSON.parse(pending); acceptEvent(event); if (event.type === 'result') finalReceived = true }
-        break
-      }
-    }
-    if (!finalReceived) throw new Error('최종 이벤트가 없습니다. 수신한 일부 관측만 보존됩니다.')
+    try { await streamExperiment(body, acceptEvent, abort.signal) } finally { body.candidateKey = '' }
   } catch (e) {
     error.value = e.name === 'AbortError' ? '전송을 중단했습니다. 이미 전송된 POST는 취소되지 않을 수 있습니다.' : (e.message || errorMessage(e))
     if (result.value) { result.value.run.state = 'INTERRUPTED'; result.value.run.reason ||= 'STREAM_INTERRUPTED' }
@@ -149,10 +131,11 @@ function save(kind) {
 <template>
   <section class="lab-page">
     <div class="portal-section-title"><div><h2>API Reliability Lab</h2><p>실측 → 분석 → 후보 비교 → 개발자 판단 → 설정 초안</p></div>
-      <Button label="직원 목록으로" severity="secondary" :disabled="busy" @click="$emit('close')" /></div>
+      <Button label="직원 목록으로" severity="secondary" :disabled="busy || campaignBusy" @click="$emit('close')" /></div>
     <Message v-if="error" severity="error" :closable="false">{{ error }}</Message>
     <Message v-if="caps?.source === 'LOCAL_MOCK'" severity="warn" :closable="false">로컬 모의 API 검증 모드입니다. 아래 결과는 외부 API 실측이 아닙니다.</Message>
     <Message v-if="caps && !caps.enabled" severity="info" :closable="false">실제 호출은 비활성입니다. 승인된 시험 조건으로 서버를 활성화한 뒤 실행하세요.</Message>
+    <LabCampaignPanel :caps="caps" :blocked="busy" @busy="campaignBusy=$event" @result="result=$event; decisions=[]; cohort='ALL'" />
     <section class="portal-panel">
       <h3>A. 실험 설정</h3>
       <p>입력값은 측정 조건입니다. 운영 추천값이 아닙니다. 키는 전송 후 지우며 저장하거나 내보내지 않습니다.</p>
@@ -272,7 +255,7 @@ function save(kind) {
         <Button label="MEASUREMENTS Markdown" :disabled="!result || busy" @click="save('md')" /><Button label="설정 YAML 초안" :disabled="!result || busy" @click="save('yaml')" /></div>
       <div v-if="showJson"><label for="lab-export-json">다운로드가 열리지 않으면 아래 원본을 선택해 복사하고 .json 파일로 저장하세요.</label>
         <textarea id="lab-export-json" :value="exportJson" readonly rows="12" style="width:100%;margin-top:0.5rem" />
-        <p>결과는 화면 메모리에 있습니다. 새 실험이나 새로고침 전에 저장하세요.</p></div>
+        <p>{{ caps?.recordingEnabled ? '측정 메타데이터는 서버에 자동 저장됩니다. 판단 초안은 별도로 내보내세요.' : '서버 자동 저장이 비활성입니다. 새 실험이나 새로고침 전에 저장하세요.' }}</p></div>
       <pre>{{ configuration(decisions) }}</pre><p>미선택 항목은 TODO입니다. 현재 코드의 설정 바인딩은 확인 후 연결합니다. 문서·운영 설정을 자동으로 덮어쓰지 않습니다.</p>
     </section>
   </section>

@@ -1,0 +1,89 @@
+{
+  "attempts": [
+    {
+      "attemptId": "d50d914d-ced8-4f3a-9b2a-d37f772e6b26",
+      "sequence": 1,
+      "logicalOperationId": "0664760e-a7c2-49f4-8110-b49a75175cac/1/1",
+      "endpoint": "LIST",
+      "concurrency": 1,
+      "retryIndex": 0,
+      "outcome": "REQUEST_TIMEOUT",
+      "httpCode": null,
+      "elapsedMs": 30000.303839,
+      "queueWaitMs": 0.198638,
+      "startedAt": "2026-10-11T07:51:31.927308433Z",
+      "endedAt": "2026-10-11T07:52:01.927615132Z",
+      "requestTimeoutMs": 30000,
+      "httpVersion": null,
+      "responseBytes": null,
+      "retryAfter": {
+        "header": null,
+        "headerMs": null,
+        "bodyMs": null,
+        "invalidHeader": false,
+        "conflict": false
+      },
+      "issues": []
+    }
+  ],
+  "phases": [
+    {
+      "concurrency": 1,
+      "elapsedMs": 30001.8336,
+      "n": 1
+    }
+  ],
+  "workflows": [],
+  "run": {
+    "runId": "0664760e-a7c2-49f4-8110-b49a75175cac",
+    "comparisonGroupId": "0664760e-a7c2-49f4-8110-b49a75175cac",
+    "type": "GET_BASELINE",
+    "endpoint": "LIST",
+    "targetAlias": "target-1",
+    "source": "EXTERNAL",
+    "startedAt": "2026-10-11T07:51:31.925246449Z",
+    "updatedAt": "2026-10-11T07:52:01.928505401Z",
+    "reason": null,
+    "state": "COMPLETED",
+    "plannedUpperBound": 1,
+    "started": 1,
+    "notStarted": 0,
+    "finished": 1,
+    "conditions": {
+      "pollIntervalMs": 5000,
+      "repeats": 1,
+      "connectTimeoutMs": 5000,
+      "durationMs": 120000,
+      "intervalMs": 2000,
+      "maxConcurrency": 1,
+      "callBudget": 1,
+      "requestTimeoutMs": 30000,
+      "maxPolls": 5
+    },
+    "javaVersion": "21.0.12.1",
+    "client": "JDK HttpClient HTTP_1_1",
+    "revision": "50700134c62f2f1d270d1de3237251ca86eeba49",
+    "specVersion": "1.1.1",
+    "specSha256": "30e38d5a486238827407063b4ca549e67b5f046c8ad40e560d45a1729eb86d24",
+    "quantileMethod": "TYPE_7",
+    "connectionMode": "reusedClient (physical connection reuse not instrumented)",
+    "retryMode": "Application OFF / transparent transport recovery not instrumented"
+  },
+  "postComparison": {},
+  "decisions": [],
+  "candidates": {
+    "timeoutMs": null,
+    "retry": {
+      "retries": 0,
+      "initialMs": null,
+      "capMs": null,
+      "attemptMs": null,
+      "deadlineMs": null,
+      "respectRetryAfter": true
+    },
+    "retryStatuses": "",
+    "pollIntervalMs": null,
+    "pollMax": null,
+    "pollDurationMs": null
+  }
+}

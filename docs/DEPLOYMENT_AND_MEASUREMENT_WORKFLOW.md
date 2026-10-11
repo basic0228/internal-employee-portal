@@ -85,6 +85,15 @@ Excel·원본·runId로 MEASUREMENTS.md의 실제 관측을 채운다. 근거가
 - 신규 실제 servlet 테스트 포함 전체 47개 테스트와 Maven package가 통과했다. 수정 커밋을 main에 푸시한 뒤 사용자 수동 재배포가 필요하다. 추가 Railway 변수나 DB SQL은 필요 없다.
 - 사용자가 배포 완료를 알린 후 운영 로그·배포 상태를 확인하고 추가 외부 측정 계획을 확정한다. 오류 후 자동 재실행 또는 미실행 요청을 자동 보충하지 않는다.
 
+## 2026-10-11 자동 배포 전환 및 후속 계획 승인
+
+- 사용자가 자동 배포로 배포했다고 알린 뒤 GitHub main 푸시 시 Railway 자동 배포가 켜져 있음을 명시적으로 확인했다. 앞선 비활성/수동 배포 기록은 당시 상태이며 이후 푸시는 운영 배포 영향까지 고려해야 한다.
+- 배포 후 읽기 전용 점검: GET /api/health 1회 HTTP 200/UP, /api/health/db 1회 HTTP 200/UP, 비로그인 /api/admin/employees 1회 HTTP 401. health 응답은 revision을 제공하지 않아 5070013의 운영 적용을 독립적으로 확인한 것은 아니다.
+- 사용자가 같은 가상 사번 LIST GET 최대 2회 계획을 승인했다. Rounds=2, Repeats=1, 동시성 1, 차수 사이 2,000ms, 연결 제한 5,000ms, 요청 제한 30,000ms, 차수 제한 40,000ms, POST/자동 재시도 없음. 첫 차수에 전송 실패·HTTP 오류·명세 issue·중단이 있으면 다음 차수를 실행하지 않는다.
+- 해당 계획의 dry run을 확인했다. 외부 호출과 실제 표본 수집은 아직 하지 않았다. 관리자 비밀번호·키는 사용자가 스크립트 프롬프트에 직접 입력한다.
+- 이후 사용자 실행 원본 2건을 확인했다. 두 차수 각각 HTTP 200/COMPLETED/reason null(n=1), 지연 14,084.269291ms 및 2,373.46457ms. revision 5070013의 운영 실행을 원본에서 확인했고 Excel·MEASUREMENTS를 갱신했다. 이전의 dry run만 완료됐다는 기록은 당시 상태다.
+- 서버 원본 시각상 차수 간 요청 종료→시작이 약 230.206초다. 설정 대기 2초와 실제 요청 간격을 구분하며 지연 원인은 미확정이다. 자동 추가 호출은 하지 않는다.
+
 ## 2026-10-11 배포 후 확인 기록
 
 - 사용자가 Postgres 콘솔에서 V1 → V2 → V3 초기 SQL을 실행했다. 제공된 화면에서 오류 없이 직원 10명·계정 0개가 확인됐다. AI가 운영 DB에 직접 SQL을 실행하지 않았다.
@@ -103,6 +112,19 @@ Excel·원본·runId로 MEASUREMENTS.md의 실제 관측을 채운다. 근거가
 
 ## 참고
 
+최신 브라우저 측정: 사용자의 GET 100회 요청을 5회씩 수행하는 계획으로 시작했다. 실제 첫 차수 2회(30초 timeout, HTTP 503/body 안내 30초)에서 중단, 사용자 선택으로 안내 대기 후 회복 GET 1회를 시행했으나 timeout이었다. 이번 계획 실제 3/미실행 97을 원본·MEASUREMENTS·Excel에 기록했다. run revision은 5070013이다. 추가 호출·서버 상한 변경·운영 설정 변경·새 배포는 하지 않았다. 브라우저의 구버전 화면을 새로고침하여 JSON 텍스트 내보내기 경로가 배포에서 표시·작동하는 것을 확인했다.
+
 - [Railway Dockerfile 빌드 변수](https://docs.railway.com/builds/dockerfiles)
 - [Railway GitHub 자동 배포 제어](https://docs.railway.com/deployments/github-autodeploys)
 - [Railway 변수 staged changes](https://docs.railway.com/variables)
+# 케이스 자동 저장 추가 배포 작업 — 아직 운영 미적용
+
+상세 계획: `docs/LAB_CAMPAIGN_PLAN.md`. 새 코드의 자동 저장 기본값은 false다. Dockerfile·DB 연결·운영 세션/쿠키/프록시 설정은 변경하지 않았다.
+
+사용자가 검토·직접 수행할 순서:
+1. V4 `backend/src/main/resources/db/migration/V4__lab_recordings.sql`을 운영 PostgreSQL에 적용한다. 추가 테이블/인덱스만 생성하며 기존 직원·계정 삭제 없음. H2 테스트만 통과했으므로 운영 적용 결과는 별도로 확인한다.
+2. Railway `LAB_RECORDING_ENABLED=true`를 설정한다. 현재 자동 배포가 켜져 있으므로 실제 push 시점과 배포를 맞춘다. V4 적용 전 활성화하면 저장 오류가 발생할 수 있다.
+3. 배포된 관리자 Lab에서 계획 저장/조회 확인. 이 작업은 외부 API를 호출하지 않는다.
+4. GET·POST 실제 호출은 최종 케이스·대상·예산 계획을 확인한 뒤 시행한다. 현재 새 11조건의 실측 n=0. 키는 테스트 실행 요청에만 전달하고 DB·문서·내보내기에 저장하지 않는다.
+
+새로고침/다른 PC는 같은 관리자 계정으로 기록을 조회한다. 프로세스 중단 후 RUNNING 차수는 확인 전 재개를 막는다. 보관기간·정리 SQL·미확정 차수 해소는 TODO다. 이전 문서의 화면 메모리 보관 설명은 recording-disabled 기존 모드에 해당한다.

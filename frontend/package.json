@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test:lab": "node --test src/lab/analysis.test.js"
+    "test:lab": "node --test src/lab/*.test.js"
   },
   "dependencies": {
     "@primeuix/themes": "1.2.5",

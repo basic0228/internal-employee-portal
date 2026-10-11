@@ -1,0 +1,82 @@
+{
+  "attempts": [
+    {
+      "attemptId": "3329064f-7d66-48d0-9058-ac6e734e5d5e",
+      "sequence": 1,
+      "logicalOperationId": "2bc4b99c-502d-4f1b-9fbb-9a767c193833/1/1",
+      "endpoint": "LIST",
+      "concurrency": 1,
+      "retryIndex": 0,
+      "outcome": "HTTP_RESPONSE",
+      "httpCode": 200,
+      "elapsedMs": 14084.269291,
+      "queueWaitMs": 1.172027,
+      "startedAt": "2026-10-11T07:29:35.801791453Z",
+      "endedAt": "2026-10-11T07:29:49.886058064Z",
+      "requestTimeoutMs": 30000,
+      "httpVersion": "HTTP_1_1",
+      "responseBytes": 60,
+      "retryAfter": {
+        "header": null,
+        "headerMs": null,
+        "bodyMs": null,
+        "invalidHeader": false,
+        "conflict": false
+      },
+      "issues": []
+    }
+  ],
+  "phases": [
+    {
+      "concurrency": 1,
+      "elapsedMs": 14100.294992,
+      "n": 1
+    }
+  ],
+  "workflows": [],
+  "run": {
+    "runId": "2bc4b99c-502d-4f1b-9fbb-9a767c193833",
+    "comparisonGroupId": "2bc4b99c-502d-4f1b-9fbb-9a767c193833",
+    "type": "GET_BASELINE",
+    "endpoint": "LIST",
+    "targetAlias": "target-1",
+    "source": "EXTERNAL",
+    "startedAt": "2026-10-11T07:29:35.748423201Z",
+    "updatedAt": "2026-10-11T07:29:49.899156349Z",
+    "reason": null,
+    "state": "COMPLETED",
+    "plannedUpperBound": 1,
+    "started": 1,
+    "notStarted": 0,
+    "finished": 1,
+    "conditions": {
+      "pollIntervalMs": 1,
+      "repeats": 1,
+      "connectTimeoutMs": 5000,
+      "durationMs": 40000,
+      "intervalMs": 2000,
+      "maxConcurrency": 1,
+      "callBudget": 1,
+      "requestTimeoutMs": 30000,
+      "maxPolls": 1
+    },
+    "javaVersion": "21.0.12.1",
+    "client": "JDK HttpClient HTTP_1_1",
+    "revision": "50700134c62f2f1d270d1de3237251ca86eeba49",
+    "specVersion": "1.1.1",
+    "specSha256": "30e38d5a486238827407063b4ca549e67b5f046c8ad40e560d45a1729eb86d24",
+    "quantileMethod": "TYPE_7",
+    "connectionMode": "reusedClient (physical connection reuse not instrumented)",
+    "retryMode": "Application OFF / transparent transport recovery not instrumented"
+  },
+  "postComparison": {},
+  "collection": {
+    "batchId": "2e3fa160-a539-4bd2-99b7-d2f2b591632c",
+    "totalApplicationBudget": 2,
+    "automaticRetry": false,
+    "round": 1,
+    "targetGroupAlias": "target-1",
+    "roundGapMs": 2000,
+    "plannedRounds": 2
+  }
+}

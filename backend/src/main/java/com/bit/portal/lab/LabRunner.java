@@ -9,6 +9,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,8 @@ public class LabRunner {
     private final String specHash;
     private final ConcurrentMap<String, Control> active=new ConcurrentHashMap<>();
     private final Semaphore running=new Semaphore(1);
+    private LabRecordingService recordings;
+    @Autowired public void recordings(LabRecordingService recordings) { this.recordings=recordings; }
     public LabRunner(BackgroundCheckClient client, ObjectMapper json,
             @Value("${lab.enabled:false}") boolean enabled, @Value("${lab.post-enabled:false}") boolean postEnabled) {
         this.client=client; this.json=json; this.enabled=enabled; this.postEnabled=postEnabled;
@@ -34,14 +37,24 @@ public class LabRunner {
         return Map.of("enabled", enabled && client.permitted(), "postEnabled", postEnabled && enabled && client.permitted(),
             "source",client.source(), "maxCalls",20, "maxConcurrency",3, "maxDurationMs",120000,
             "transport","Java 21 HttpClient / HTTP_1_1 / request + whole-body deadline",
-            "transparentRetry","Application retries OFF; JDK transport recovery is not wire-instrumented");
+            "transparentRetry","Application retries OFF; JDK transport recovery is not wire-instrumented",
+            "recordingEnabled",recordings!=null && recordings.enabled());
     }
     public Control reserve(long owner, LabRequest request) {
+        return reserve(owner,request,null,null);
+    }
+    public Control reserve(long owner,LabRequest request,String campaignId,String caseId) {
         if (!enabled || !client.permitted()) throw error(HttpStatus.SERVICE_UNAVAILABLE,"실험 호출이 비활성입니다. 승인 후 서버에서 활성화하세요.");
         validate(request);
         if (!running.tryAcquire()) throw error(HttpStatus.CONFLICT,"다른 실험이 실행 중입니다.");
         var control=new Control(UUID.randomUUID().toString(),owner);
-        active.put(control.id,control); return control;
+        control.campaignId=campaignId;control.caseId=caseId;
+        active.put(control.id,control);
+        try {
+            if(recordings!=null) recordings.open(control.id,owner,request,campaignId,caseId);
+            else if(campaignId!=null || caseId!=null) throw error(HttpStatus.SERVICE_UNAVAILABLE,"서버 저장이 필요합니다.");
+            return control;
+        } catch(RuntimeException failure) { release(control);throw failure; }
     }
     public void cancel(String id,long owner) {
         var control=active.get(id);
@@ -55,6 +68,7 @@ public class LabRunner {
         final AtomicInteger started=new AtomicInteger();
         boolean finished;
         long deadline;
+        String campaignId,caseId;
         Control(String id,long owner) { this.id=id; this.owner=owner; }
         void stop(String why) { reason.compareAndSet(null,why); }
         boolean stopped() { return reason.get()!=null; }
@@ -79,10 +93,10 @@ public class LabRunner {
     }
     static int planned(LabRequest r) {
         return switch(r.type()) {
-            case GET_BASELINE -> r.repeats();
+            case GET_BASELINE, GET_FIXED -> r.repeats();
             case GET_CONCURRENCY -> r.repeats()*r.concurrency();
             case CREATE_POLL -> 1+r.maxPolls();
-            case REPEAT_POST -> 4; // baseline + two POSTs + final reconciliation
+            case REPEAT_POST -> Math.min(4,r.callBudget()); // A final campaign unit may have a smaller remaining HTTP budget.
         };
     }
     public void execute(Control control,LabRequest r,OutputStream output) {
@@ -93,6 +107,7 @@ public class LabRunner {
             state.event("start",Map.of("run",state.run(), "attempts",List.of()));
             switch(r.type()) {
                 case GET_BASELINE -> state.getPhase(1);
+                case GET_FIXED -> state.getPhase(r.concurrency());
                 case GET_CONCURRENCY -> { for(int c=1;c<=r.concurrency() && !state.stopCheck();c++) state.getPhase(c); }
                 case CREATE_POLL -> state.createPoll();
                 case REPEAT_POST -> state.repeatPost();
@@ -106,7 +121,14 @@ public class LabRunner {
             control.finished=true;
             try { state.event("result",Map.of("run",state.run(),"attempts",state.attempts,"phases",state.phases,
                 "workflows",state.workflows(),"postComparison",state.postComparison)); } catch(IOException ignored) { }
-        } finally { release(control); }
+        } finally {
+            control.finished=true;
+            if(recordings!=null && recordings.enabled()) {
+                try { recordings.checkpoint(control.id,control.owner,state.snapshot()); }
+                catch(RuntimeException storageFailure) { control.stop("STORAGE_FAILED"); }
+            }
+            release(control);
+        }
     }
     private final class State {
         final Control control; final LabRequest r; final OutputStream output;
@@ -116,6 +138,7 @@ public class LabRunner {
         final Map<String,Map<String,Object>> flows=new LinkedHashMap<>();
         final Map<String,Object> postComparison=new LinkedHashMap<>();
         BackgroundCheckClient.Transport transport;
+        boolean disconnected;
         State(Control control,LabRequest r,OutputStream output) { this.control=control; this.r=r; this.output=output; }
         boolean stopCheck() {
             if(System.nanoTime()>=control.deadline) control.stop("DURATION_LIMIT");
@@ -136,12 +159,25 @@ public class LabRunner {
             map.put("javaVersion",System.getProperty("java.version")); map.put("client","JDK HttpClient HTTP_1_1");
             map.put("revision",System.getenv().getOrDefault("RAILWAY_GIT_COMMIT_SHA","LOCAL_UNRECORDED"));
             map.put("specVersion","1.1.1"); map.put("specSha256",specHash); map.put("quantileMethod","TYPE_7");
+            map.put("campaignId",control.campaignId);map.put("caseId",control.caseId);
+            map.put("recordingEnabled",recordings!=null && recordings.enabled());
+            map.put("partialProtocol",r.type()==LabRequest.Type.REPEAT_POST && r.callBudget()<4 || r.type()==LabRequest.Type.CREATE_POLL && r.maxPolls()==0);
             map.put("connectionMode","reusedClient (physical connection reuse not instrumented)");
             map.put("retryMode","Application OFF / transparent transport recovery not instrumented");
             return map;
         }
         void event(String type,Object data) throws IOException {
-            output.write(json.writeValueAsBytes(Map.of("type",type,"data",data))); output.write('\n'); output.flush();
+            // Persist the sanitized snapshot before notifying the browser. A failed save stops new calls.
+            if(recordings!=null && recordings.enabled()) {
+                try { recordings.checkpoint(control.id,control.owner,snapshot()); }
+                catch(RuntimeException failure) { control.stop("STORAGE_FAILED");throw new IOException("Lab recording unavailable"); }
+            }
+            if(!disconnected) try {
+                output.write(json.writeValueAsBytes(Map.of("type",type,"data",data))); output.write('\n');output.flush();
+            } catch(IOException failure) { disconnected=true;control.stop("DISCONNECTED"); }
+        }
+        Map<String,Object> snapshot() {
+            return Map.of("run",run(),"attempts",attempts,"phases",phases,"workflows",workflows(),"postComparison",postComparison);
         }
         boolean pause(int ms) {
             long end=Math.min(control.deadline,System.nanoTime()+TimeUnit.MILLISECONDS.toNanos(ms));
@@ -164,11 +200,15 @@ public class LabRunner {
             return body;
         }
         void record(Reply reply,String endpoint,int stage,String expectedCheck) throws IOException {
+            record(reply,endpoint,stage,expectedCheck,1);
+        }
+        void record(Reply reply,String endpoint,int stage,String expectedCheck,int groupWidth) throws IOException {
             if(reply==null || "NOT_STARTED".equals(reply.outcome())) return;
             var row=new LinkedHashMap<String,Object>();
             row.put("attemptId",UUID.randomUUID().toString()); row.put("sequence",attempts.size()+1);
             row.put("logicalOperationId",control.id+"/"+stage+"/"+(attempts.size()+1));
             row.put("endpoint",endpoint);row.put("concurrency",stage);row.put("retryIndex",0);
+            row.put("groupWidth",groupWidth);
             row.put("outcome",reply.outcome());row.put("httpCode",reply.httpCode());row.put("elapsedMs",reply.elapsedMs());
             row.put("queueWaitMs",reply.queueWaitMs());row.put("startedAt",reply.startedAt());row.put("endedAt",reply.endedAt());
             row.put("requestTimeoutMs",r.requestTimeoutMs());row.put("httpVersion",reply.httpVersion());
@@ -217,6 +257,8 @@ public class LabRunner {
             if(reply.httpCode()!=null && (reply.httpCode()==401 || reply.httpCode()==404)) control.stop("HTTP_"+reply.httpCode());
             if(reply.httpCode()!=null && (reply.httpCode()==503 || reply.httpCode()==429) || reply.retry().preferredMs()!=null) control.stop("RETRY_AFTER_OR_OVERLOAD");
             if(ok && !issues.isEmpty()) control.stop("CONTRACT_MISMATCH");
+            if(control.campaignId!=null && (!"HTTP_RESPONSE".equals(reply.outcome()) || !ok || !issues.isEmpty()))
+                control.stop("OBSERVED_ERROR"); // Campaigns stop before another group; in-flight replies are still collected.
             event("progress",Map.of("run",run(),"attempt",row));
         }
         void validateCheck(JsonNode body,List<String> issues,String expected) {
@@ -242,12 +284,16 @@ public class LabRunner {
             try(var pool=Executors.newFixedThreadPool(c)) {
                 for(int offset=0;offset<r.repeats() && !stopCheck();offset+=c) {
                     var futures=new ArrayList<Future<Reply>>();
-                    for(int j=0;j<Math.min(c,r.repeats()-offset);j++) futures.add(pool.submit(()->call(r.endpoint().name(),r.checkId(),c)));
+                    int groupWidth=Math.min(c,r.repeats()-offset);
+                    for(int j=0;j<groupWidth;j++) futures.add(pool.submit(()->call(r.endpoint().name(),r.checkId(),c)));
+                    IOException saveFailure=null;
                     for(var future:futures) {
-                        try { record(future.get(),r.endpoint().name(),c,r.endpoint()==LabRequest.Endpoint.DETAIL?r.checkId():null); }
+                        try { record(future.get(),r.endpoint().name(),c,r.endpoint()==LabRequest.Endpoint.DETAIL?r.checkId():null,groupWidth); }
+                        catch(IOException e) { saveFailure=e; }
                         catch(InterruptedException e) { Thread.currentThread().interrupt();control.stop("CANCELLED"); }
                         catch(ExecutionException e) { control.stop("RUN_ERROR"); }
                     }
+                    if(saveFailure!=null) throw saveFailure;
                     if(offset+c<r.repeats() && !pause(r.intervalMs())) break;
                 }
             }
@@ -272,18 +318,18 @@ public class LabRunner {
             if(before==null || !Integer.valueOf(200).equals(before.httpCode()) || stopCheck()) return;
             Set<String> prior=ids(before.body()); var returned=new ArrayList<String>();
             boolean unknown=false;
-            for(int i=0;i<2 && !stopCheck();i++) {
+            for(int i=0;i<2 && attempts.size()<r.callBudget() && !stopCheck();i++) {
                 Reply post=call("CREATE",null,1);record(post,"CREATE",1,null);
                 if(post==null || !"HTTP_RESPONSE".equals(post.outcome())) { unknown=true;break; }
                 if(!Integer.valueOf(201).equals(post.httpCode()) || post.body()==null || stopCheck()) break;
                 returned.add(post.body().path("checkId").asText());
                 if(i==0 && !pause(r.intervalMs())) break;
             }
-            Reply after=call("LIST",null,1);record(after,"LIST",1,null);
+            Reply after=attempts.size()<r.callBudget()?call("LIST",null,1):null;record(after,"LIST",1,null);
             Set<String> afterIds=after!=null && Integer.valueOf(200).equals(after.httpCode())?ids(after.body()):null;
             postComparison.put("returnedRefs",returned.stream().map(id->aliases.get(id)).toList());
             postComparison.put("newHistoryCount",afterIds==null?-1:afterIds.stream().filter(id->!prior.contains(id)).count());
-            postComparison.put("result",unknown?"UNKNOWN_NO_REPOST":returned.size()==2?
+            postComparison.put("result",unknown?"UNKNOWN_NO_REPOST":r.callBudget()<4?"INCOMPLETE_BUDGET":returned.size()==2?
                     (returned.get(0).equals(returned.get(1))?"SAME_CHECK_ID":"DISTINCT_CHECK_IDS"):"INCOMPLETE_OR_REJECTED");
             postComparison.put("historyReconciled",afterIds!=null && afterIds.containsAll(returned));
             postComparison.put("limitation","History differences alone cannot attribute uncertain POSTs or exclude another caller.");
