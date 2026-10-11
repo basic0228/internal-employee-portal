@@ -144,4 +144,4 @@ Lab 초기·후속 POST 업무8개 중 처음부터clear4개·pending4개였다.
 
 오프라인 실행: `node scripts/integrate-submission-evidence.mjs`. runId/attemptId 중복 제거, 반복 snapshot의 조건·attempt 일치, 민감 필드0, 종료 EXTERNAL, 초기34·후속18/POST2 대조를 검증했다. source별 SHA256을 통합 JSON에 보존했다. Excel은 같은 JSON에서 생성하며 후보 변경·원복과 수식 오류0을 확인했다. 저장된 XLSX에서65건의 run·Endpoint·전송 결과·HTTP·지연·시각을 원본과 대조했다. 대체 미리보기로5시트와 후보의3개 영역을 검토해 표시 잘림0건을 확인했다. native 렌더러 Vulkan 오류로 실제 Excel 시각 검증은 미완료이며 [검증 기록](measurements/integrated/workbook-validation.json)에 이 한계를 명시했다.
 
-이번 제출 문서 통합은 추가 외부 호출0·운영 설정 변경0·DB 변경0이다. 앞선 업무 검증5외부호출과 구분한다. 원본은 수정하지 않고 단계별 기록을 별도로 보존했다. AI_LOG A의 세 번째 사례는 후속으로 실제 대화·설정·Git을 대조해 확인했다. 최종 제출 전 남은 운영 검증·제출 계정·전체 대화 원문·C의 본인 이유·실제 작업 시간은[제출 체크리스트](SUBMISSION.md)에 정리했다.
+이번 제출 문서 통합은 추가 외부 호출0·운영 설정 변경0·DB 변경0이다. 앞선 업무 검증5외부호출과 구분한다. 원본은 수정하지 않고 단계별 기록을 별도로 보존했다. AI_LOG A의 세 번째 사례는 실제 대화·설정·Git을 대조해 확인했고, C의 본인 이유도 사용자 확인 후 작성했다. 최종 제출 전 남은 운영 검증·제출 계정·전체 대화 원문·실제 작업 시간은[제출 체크리스트](SUBMISSION.md)에 정리했다.
