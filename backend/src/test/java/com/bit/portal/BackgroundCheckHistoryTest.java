@@ -30,8 +30,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     "spring.sql.init.data-locations=classpath:db/migration/V2__required_employee_seed.sql",
     "portal.bootstrap.admin-username=bg-admin","portal.bootstrap.admin-password=BackgroundPassword1",
     "background-check.enabled=true","background-check.recording-enabled=true","background-check.candidate-key=PRIVATE_TEST_KEY",
-    "background-check.client.connect-timeout-ms=1000","background-check.client.request-timeout-ms=1000",
-    "background-check.policy.polling-interval-ms=100","background-check.policy.polling-max-duration-ms=5000",
+    "background-check.client.connect-timeout-ms=1000","background-check.client.request-timeout-ms=3000",
+    "background-check.policy.polling-interval-ms=100","background-check.policy.polling-max-duration-ms=10000",
     "background-check.policy.polling-max-attempts=2"
 })
 @ActiveProfiles("portal-dev") @AutoConfigureMockMvc
@@ -49,6 +49,7 @@ class BackgroundCheckHistoryTest {
     long actor;
     @BeforeEach void resetH2Only() {
         jdbc.update("DELETE FROM background_check_views");jdbc.update("DELETE FROM background_checks");api.reset();
+        api.lostCreateDelayMs=4000; // Fixture only: normal requests get 3s; created-but-lost replies take 4s.
         actor=accounts.findByUsername("bg-admin").id();
         if(accounts.findByUsername("bg-user")==null) accounts.insert("EMP-001","bg-user",encoder.encode("BackgroundPassword1"),"USER");
     }
@@ -78,14 +79,18 @@ class BackgroundCheckHistoryTest {
     @Test void lostPostResponseRemainsUnknownEvenWhenTheExternalRecordExists() throws Exception {
         api.mode="LOST_CREATE";var request=input();var row=history.create("EMP-001",actor,request);
         assertThat(row.localState()).isEqualTo("UNKNOWN");assertThat(api.posts.get()).isEqualTo(1);
+        assertThat(row.lastOutcome()).isEqualTo("REQUEST_TIMEOUT");
         assertThat(history.create("EMP-001",actor,request).localState()).isEqualTo("UNKNOWN");
         assertThatThrownBy(()->history.create("EMP-001",actor,input())).isInstanceOf(ResponseStatusException.class);
         assertThat(api.posts.get()).isEqualTo(1);
         api.mode="NORMAL";
         assertThatThrownBy(()->history.resolve("EMP-001",row.requestId(),actor,"CHK-mock-1",false)).isInstanceOf(ResponseStatusException.class);
         Thread.sleep(110);
+        var candidates=history.candidates("EMP-001",row.requestId());
+        assertThat(candidates.path("checks").get(0).path("checkId").asText()).isEqualTo("CHK-mock-1");
         var linked=history.resolve("EMP-001",row.requestId(),actor,"CHK-mock-1",true);
         assertThat(linked.status()).isEqualTo("clear");assertThat(api.posts.get()).isEqualTo(1);
+        assertThat(linked.lastOutcome()).isEqualTo("MANUALLY_LINKED");
         assertThat(mapper.views(row.requestId())).hasSize(1);
     }
     @Test void observationErrorKeepsPendingAndDoesNotCreateAnotherCheck() throws Exception {
@@ -111,6 +116,18 @@ class BackgroundCheckHistoryTest {
         int calls=api.calls.get();history.refresh("EMP-001",row.requestId(),actor,true);assertThat(api.calls.get()).isEqualTo(calls);
         jdbc.update("UPDATE background_checks SET poll_stopped=FALSE,poll_deadline=? WHERE request_id=?",OffsetDateTime.now().minusSeconds(1),row.requestId());
         history.refresh("EMP-001",row.requestId(),actor,true);assertThat(api.calls.get()).isEqualTo(calls);
+    }
+    @Test void pendingTransitionsToFlaggedAndStopsWithoutAnotherAutomaticGet() throws Exception {
+        api.mode="PENDING_THEN_FLAGGED";var row=history.create("EMP-001",actor,input());
+        assertThat(row.status()).isEqualTo("pending");Thread.sleep(110);
+        history.refresh("EMP-001",row.requestId(),actor,true);
+        assertThat(history.get("EMP-001",row.requestId()).status()).isEqualTo("pending");Thread.sleep(110);
+        history.refresh("EMP-001",row.requestId(),actor,true);
+        var completed=history.get("EMP-001",row.requestId());
+        assertThat(completed.status()).isEqualTo("flagged");assertThat(completed.pollStopped()).isTrue();
+        assertThat(completed.completedAt()).isNotNull();assertThat(completed.pollCount()).isEqualTo(2);
+        int calls=api.calls.get();history.refresh("EMP-001",row.requestId(),actor,true);
+        assertThat(api.calls.get()).isEqualTo(calls);assertThat(api.posts.get()).isEqualTo(1);
     }
     @Test void completedChecksRequireExplicitManualRecheckAndOldHistoryIsPreserved() {
         api.mode="IMMEDIATE_FINAL";var first=history.create("EMP-001",actor,input());
@@ -139,6 +156,21 @@ class BackgroundCheckHistoryTest {
         assertThatThrownBy(()->history.resolve("EMP-001",row.requestId(),actor,"CHK-mock-1",true)).isInstanceOf(ResponseStatusException.class);
         assertThat(history.get("EMP-002",row.requestId()).localState()).isEqualTo("UNKNOWN");
     }
+    @Test void userCannotAccessOwnOrOtherEmployeesDetailRefreshAndReconciliation() throws Exception {
+        var row=history.create("EMP-001",actor,input());var user=login("bg-user");
+        mvc.perform(get("/api/me").session(user)).andExpect(status().isOk())
+            .andExpect(jsonPath("$.employeeId").value("EMP-001"));
+        int calls=api.calls.get();
+        for(String employee:List.of("EMP-001","EMP-002")) {
+            String base="/api/admin/employees/"+employee+"/background-checks";
+            for(String path:List.of(base+"/history",base+"/"+row.checkId(),base+"/history/"+row.requestId()+"/candidates"))
+                mvc.perform(get(path).session(user)).andExpect(status().isForbidden());
+            for(String path:List.of(base,base+"/history/"+row.requestId()+"/refresh",base+"/history/"+row.requestId()+"/resolve"))
+                mvc.perform(post(path).session(user).with(csrf()).contentType("application/json").content("{}"))
+                    .andExpect(status().isForbidden());
+        }
+        assertThat(api.calls.get()).isEqualTo(calls);assertThat(api.posts.get()).isEqualTo(1);
+    }
     @Test void administratorCanCreateViaCsrfProtectedControllerAndReadSavedActor() throws Exception {
         var admin=login("bg-admin");String path="/api/admin/employees/EMP-001/background-checks";
         mvc.perform(post(path).session(admin).with(csrf()).contentType("application/json").content("""
@@ -150,7 +182,9 @@ class BackgroundCheckHistoryTest {
         assertThat(api.posts.get()).isEqualTo(1);
     }
     @Test void duplicateRefreshClaimsCannotExceedPollingLimit() throws Exception {
-        var row=history.create("EMP-001",actor,input());Thread.sleep(110);api.mode="CONCURRENCY";
+        var row=history.create("EMP-001",actor,input());
+        assertThat(row.localState()).as("Normal create outcome: %s",row.lastOutcome()).isEqualTo("KNOWN");
+        Thread.sleep(110);api.mode="CONCURRENCY";
         try(var pool=Executors.newFixedThreadPool(2)) {
             var start=new CountDownLatch(1);var results=new ArrayList<Future<?>>();
             for(int i=0;i<2;i++) results.add(pool.submit(()->{try {start.await();history.refresh("EMP-001",row.requestId(),actor,true);} catch(InterruptedException e) {throw new RuntimeException(e);} }));

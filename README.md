@@ -15,10 +15,10 @@
 | 본인 조회·수정 | 본인 정보 조회, 이메일·전화번호만 수정 | 로컬 소유권·보호 필드·CSRF·저장 검증 |
 | 퇴사자 접근 | 신규 로그인과 기존 세션의 매 API 요청 재직 확인 | 로컬 세션·경로·오류 검증. 운영 퇴사 검증 TODO |
 | 필수 시드 | EMP-001~010, 동명이인 허용, EMP-007 생년월일NULL | SQL·로컬 검증, 배포 목록 |
-| 업무 배경 조회 | 관리자 수동POST, DB 최소 이력, 결과 확인·열람 기록, 중복/결과 불명 제어 | H2·모의HTTP 및 운영POST1건/상세GET1건·이력/열람 저장·비로그인401 확인. 운영 예외 경로 TODO |
+| 업무 배경 조회 | 관리자 수동POST, DB 최소 이력, 결과 확인·열람 기록, 중복/결과 불명 제어 | H2·모의HTTP, 운영EMP-001 즉시clear·EMP-002 pending 후 수동flagged, 이력/열람 저장·비로그인401. 자동 최종 발견·실제 응답 유실 복구·운영USER403 TODO |
 | API Reliability Lab | 실험·통계·후속 절차·후보 비교·서버 자동 저장 | 배포 실측과 저장 원본 대조 |
 
-**과제 전체 운영 검증은 미완료다.** 관리자 수동 배경 조회와 최소 이력 보관을 구현·활성화하고 정상 경로1건을 운영에서 확인했다. 조회일시·계정·대상·특이사항 여부 등 이력만 보관하며 상세 결과는 저장하지 않는다. 관리자만 열람하고 이력 삭제·만료는 없다. timeout/retry/polling은 보수적 초기값을 적용했으며 실측 최적값은 미확인이다. [설정과 한계](docs/BACKGROUND_CHECK_POLICY.md)를 참고한다. 초기 비밀번호 변경은 미구현이다.
+**과제 전체 운영 검증은 미완료다.** 관리자 수동 배경 조회와 최소 이력 보관을 구현·활성화하고 업무2건을 운영에서 확인했다(실제 외부 호출 총5건). 조회일시·계정·대상·특이사항 여부 등 이력만 보관하며 상세 결과는 저장하지 않는다. 관리자만 열람하고 이력 삭제·만료는 없다. timeout/retry/polling은 보수적 초기값을 적용했으며 실측 최적값은 미확인이다. [설정과 한계](docs/BACKGROUND_CHECK_POLICY.md)를 참고한다. 비밀번호 변경·최초 강제 변경은 미구현이다. 제출 계정·전체 AI 대화·본인 작성 항목은 [제출 체크리스트](docs/SUBMISSION.md)에 있다.
 
 ## 제출 근거자료
 
@@ -30,7 +30,7 @@
 - [원본 인덱스](docs/measurements/integrated/INDEX.md): run ID·조건·원본 SHA256
 - [통합 Excel](docs/measurements/submission-evidence.xlsx): 조건별 통계·후보 계산·원본 관측
 
-전체65건을 단일 성능 분포로 합산하지 않는다. 초기11조건34건과 승인 후속18건, 별도 탐색13건을 분리했다. pending→최종 발견 n=0, 실제 추가 retry1건/정상 회복0건이다.
+전체65건을 단일 성능 분포로 합산하지 않는다. 초기11조건34건과 승인 후속18건, 별도 탐색13건을 분리했다. Lab pending→최종 발견 n=0, 실제 추가 retry1건/정상 회복0건이다. 이후 업무 화면의 수동 최종 발견 n=1은 별도 기능 검증이며 Lab 원본·Excel에 합치지 않았다. 정확한 서버 업무 시간·실제 POST 타임아웃 복구 n=0을 유지한다.
 
 ## 구조
 
@@ -70,11 +70,13 @@ $env:VITE_PORTAL_UI_ENABLED = 'true'
 npm --prefix frontend run build
 ```
 
-기록된 C03 검증은 당시 백엔드79개와 관련19개 재검증, 프론트21개였다. 이후 업무 조회 변경 검증은 [SUBMISSION](docs/SUBMISSION.md)에 별도 기록한다. H2 검증과 UI 빌드는 운영 PostgreSQL·배포 브라우저 검증을 대체하지 않는다. 번들 크기 경고는 남아 있다.
+최신 백엔드97개 통과(업무 이력15개 포함, 실패·오류·skip0). 앞선 업무 변경의 프론트23개·관리자UI opt-in 빌드·JAR 패키징도 통과했다. 이번 후속 검증에서는 프론트 소스를 바꾸지 않았다. 로컬과 운영 확인은 [SUBMISSION](docs/SUBMISSION.md)에 구분한다. H2 검증과 UI 빌드는 운영 PostgreSQL·배포 브라우저 검증을 대체하지 않는다. 번들 크기 경고는 남아 있다.
+
+운영 USER 권한 확인 도구는 `./scripts/verify-user-access.ps1 -Execute`다. 기존 USER 로그인 정보를 직접 입력하며 본인정보200·금지12경로403·유효CSRF logout204를 검사한다. 외부 조회 입력을 사용하지 않고 비밀정보 없는 결과를 outputs에 저장한다. 로컬 실제HTTP 검증은 통과했고 운영 실행 결과는 아직 없다.
 
 ## PostgreSQL와 배포
 
-SQL 자동 실행·Flyway는 도입하지 않았다. 기존 테이블과 적용 버전을 확인한 뒤 필요한 파일만 적용한다. V1 직원·계정, V2 필수 시드, V3 연락처, V4 lab_campaigns/lab_runs, V5 background_checks/background_check_views다. DROP/TRUNCATE와 기존 비밀번호 초기화는 수행하지 않는다. 사용자가 V5 생성 명령과 앱 변수 설정·배포를 완료한 후 운영에서 업무 이력1건과 수동 열람 기록의 저장·읽기를 확인했다.
+SQL 자동 실행·Flyway는 도입하지 않았다. 기존 테이블과 적용 버전을 확인한 뒤 필요한 파일만 적용한다. V1 직원·계정, V2 필수 시드, V3 연락처, V4 lab_campaigns/lab_runs, V5 background_checks/background_check_views다. DROP/TRUNCATE와 기존 비밀번호 초기화는 수행하지 않는다. 사용자가 V5 생성 명령과 앱 변수 설정·배포를 완료한 후 운영에서 업무 이력2건과 수동 열람 기록의 저장·읽기를 확인했다.
 
 Docker는 Vue 빌드→Maven/Java21→JRE21 통합 이미지다. VITE_PORTAL_UI_ENABLED는 빌드 플래그로 runtime 값만 바꿔서는 화면이 달라지지 않는다. 서버 새 기능은 portal-dev 프로필에서 활성화한다. 기본 플래그는 false이며 사용자 배포 설정과 구분한다. main 푸시는 Railway 자동 배포를 일으킬 수 있다.
 

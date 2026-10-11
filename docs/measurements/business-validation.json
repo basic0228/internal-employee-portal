@@ -1,0 +1,197 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Submission verification evidence, kept separate from Lab latency samples",
+  "compiledOn": "2026-10-12",
+  "labSamplesModified": false,
+  "pendingBusinessObservation": {
+    "source": "RAILWAY_BUSINESS_UI",
+    "employeeId": "EMP-002",
+    "requestedAt": "2026-10-11T22:28:25.671353Z",
+    "initialPendingObservedAt": "2026-10-11T22:28:27.848217Z",
+    "automaticObservationStoppedAt": "2026-10-11T22:28:34.219924Z",
+    "manualFinalObservedAt": "2026-10-11T22:29:56.720219Z",
+    "completedAtDisplay": "2026-10-11T22:28:58.774Z",
+    "finalStatus": "flagged",
+    "externalCalls": {
+      "post": 1,
+      "automaticGet": 1,
+      "manualGet": 1,
+      "retry": 0
+    },
+    "automaticSuccess": false
+  },
+  "observationLimits": [
+    "Manual final discovery only; no successful automatic final discovery",
+    "Observation interval includes manual waiting; not pure HTTP or server processing time",
+    "Automatic stop HTTP outcome was not captured",
+    "External POST timeout recovery has not been observed",
+    "Production USER verification has not been run"
+  ],
+  "localUserVerification": {
+    "source": "LOCAL_PREVIEW",
+    "runId": "d140737d-894d-4af2-856f-871118edcae1",
+    "startedAt": "2026-10-11T22:38:22.4263801+00:00",
+    "endedAt": "2026-10-11T22:38:22.7811190+00:00",
+    "userRoleConfirmed": true,
+    "csrfLogoutConfirmed": true,
+    "completed": true,
+    "passed": true,
+    "failureReason": null,
+    "observations": [
+      {
+        "status": 200,
+        "scenario": "OWN_INFO",
+        "expected": 200
+      },
+      {
+        "status": 403,
+        "scenario": "OWN_HISTORY",
+        "expected": 403
+      },
+      {
+        "status": 403,
+        "scenario": "OWN_DETAIL",
+        "expected": 403
+      },
+      {
+        "status": 403,
+        "scenario": "OWN_CANDIDATES",
+        "expected": 403
+      },
+      {
+        "status": 403,
+        "scenario": "OWN_CREATE",
+        "expected": 403
+      },
+      {
+        "status": 403,
+        "scenario": "OWN_REFRESH",
+        "expected": 403
+      },
+      {
+        "status": 403,
+        "scenario": "OWN_RESOLVE",
+        "expected": 403
+      },
+      {
+        "status": 403,
+        "scenario": "OTHER_HISTORY",
+        "expected": 403
+      },
+      {
+        "status": 403,
+        "scenario": "OTHER_DETAIL",
+        "expected": 403
+      },
+      {
+        "status": 403,
+        "scenario": "OTHER_CANDIDATES",
+        "expected": 403
+      },
+      {
+        "status": 403,
+        "scenario": "OTHER_CREATE",
+        "expected": 403
+      },
+      {
+        "status": 403,
+        "scenario": "OTHER_REFRESH",
+        "expected": 403
+      },
+      {
+        "status": 403,
+        "scenario": "OTHER_RESOLVE",
+        "expected": 403
+      }
+    ]
+  },
+  "localAdministratorGuard": {
+    "source": "LOCAL_PREVIEW",
+    "runId": "68304ec3-d5d5-4e9f-9658-c131661c815f",
+    "startedAt": "2026-10-11T22:38:54.7039526+00:00",
+    "endedAt": "2026-10-11T22:38:55.0172652+00:00",
+    "userRoleConfirmed": false,
+    "csrfLogoutConfirmed": true,
+    "completed": false,
+    "passed": false,
+    "failureReason": "EXPECTED_USER_ROLE",
+    "observations": []
+  },
+  "localBackendSuites": [
+    {
+      "suite": "com.bit.portal.BackgroundCheckHistoryTest",
+      "tests": 15,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.bit.portal.DeploymentCompatibilityTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.bit.portal.EmploymentGuardFilterTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.bit.portal.lab.BackgroundCheckServiceTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.bit.portal.lab.LabComparisonTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.bit.portal.lab.LabFollowupTest",
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.bit.portal.lab.LabRecordingTest",
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.bit.portal.lab.LabRunnerTest",
+      "tests": 15,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.bit.portal.lab.LabStreamingTimeoutTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.bit.portal.PortalIntegrationTest",
+      "tests": 24,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "sourceSha256": {
+    "pendingProof": "c444a65e688e28137fdb170f79a21f15762f742aeb5e8405f262cc8dcab53e62",
+    "localUserProof": "d93419d55830432249979700ef7ebe6c26b8efac628a5d6227a6011a9568f48a",
+    "localAdministratorGuard": "48003576b88e36baf6ac54bc3d96b96583a567f4b60da402013a98224f64df74"
+  }
+}

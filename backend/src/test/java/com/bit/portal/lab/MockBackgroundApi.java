@@ -17,6 +17,7 @@ public final class MockBackgroundApi implements AutoCloseable {
     private final ConcurrentMap<String,Map<String,Object>> checks=new ConcurrentHashMap<>();
     public final AtomicInteger calls=new AtomicInteger(), posts=new AtomicInteger(), inflight=new AtomicInteger(), maxInflight=new AtomicInteger();
     public volatile String mode="NORMAL";
+    public volatile int lostCreateDelayMs=1500;
     public MockBackgroundApi(int port) throws IOException {
         server=HttpServer.create(new InetSocketAddress("127.0.0.1",port),0);
         server.setExecutor(threads);server.createContext("/background-checks",this::handle);server.start();
@@ -63,7 +64,7 @@ public final class MockBackgroundApi implements AutoCloseable {
                 item.put("estimatedCompletionSeconds",1);
                 if("IMMEDIATE_FINAL".equals(mode)) {item.put("status","clear");item.put("completedAt",Instant.now().toString());}
                 checks.put(id,item);
-                if("LOST_CREATE".equals(mode)) sleep(1500); // Created before the client times out; local fixture only.
+                if("LOST_CREATE".equals(mode)) sleep(lostCreateDelayMs); // Created before the client times out; local fixture only.
                 send(x,201,item);return;
             }
             if(path.equals("/background-checks")) {
