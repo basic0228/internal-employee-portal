@@ -1,0 +1,121 @@
+{
+  "plan": {
+    "maxHttpCalls": 7,
+    "goalMeaning": "Observed HTTP attempts, including GET, POST, polling and failures; never count unstarted calls",
+    "cases": [
+      {
+        "caseId": "80d9889e-fee1-4669-94c1-36f8fcf775cc",
+        "conditions": {
+          "type": "POLL_EXISTING",
+          "endpoint": "LIST",
+          "unit": "REQUESTS",
+          "goal": 7,
+          "concurrency": 1,
+          "connectTimeoutMs": 5000,
+          "requestTimeoutMs": 30000,
+          "intervalMs": 2000,
+          "pollIntervalMs": 5000,
+          "maxPolls": 6,
+          "protocol": {
+            "family": "P01",
+            "variant": "DEFAULT",
+            "block": 0,
+            "order": 0
+          }
+        }
+      }
+    ],
+    "scope": "metadata only; targets and keys are not stored",
+    "campaignId": "d0b4e21a-7d5e-4bb5-ac12-f5b5e96494da"
+  },
+  "runs": [
+    {
+      "result": {
+        "phases": [],
+        "workflows": [],
+        "postComparison": {},
+        "run": {
+          "runId": "d58d979a-5b67-4643-aad1-41f87602f647",
+          "comparisonGroupId": "d58d979a-5b67-4643-aad1-41f87602f647",
+          "type": "POLL_EXISTING",
+          "endpoint": "LIST",
+          "targetAlias": "target-1",
+          "source": "EXTERNAL",
+          "startedAt": "2026-10-11T18:14:18.959286953Z",
+          "updatedAt": "2026-10-11T18:14:19.597758213Z",
+          "reason": "OBSERVED_ERROR",
+          "state": "STOPPED",
+          "plannedUpperBound": 7,
+          "started": 1,
+          "notStarted": 6,
+          "finished": 1,
+          "conditions": {
+            "requestTimeoutMs": 30000,
+            "maxPolls": 6,
+            "pollIntervalMs": 5000,
+            "repeats": 1,
+            "connectTimeoutMs": 5000,
+            "durationMs": 120000,
+            "intervalMs": 2000,
+            "maxConcurrency": 1,
+            "callBudget": 7
+          },
+          "protocol": {
+            "family": "P01",
+            "variant": "DEFAULT",
+            "block": 0,
+            "order": 0
+          },
+          "comparisonErrorPolicy": "Default campaign stop policy / explicit retry exceptions only",
+          "maxClientCallsInFlight": 1,
+          "javaVersion": "21.0.12.1",
+          "client": "JDK HttpClient HTTP_1_1",
+          "revision": "aa9d9d39a74ba1d94abaa26189909dded2b3f38a",
+          "specVersion": "1.1.1",
+          "specSha256": "30e38d5a486238827407063b4ca549e67b5f046c8ad40e560d45a1729eb86d24",
+          "quantileMethod": "TYPE_7",
+          "campaignId": "d0b4e21a-7d5e-4bb5-ac12-f5b5e96494da",
+          "caseId": "80d9889e-fee1-4669-94c1-36f8fcf775cc",
+          "recordingEnabled": true,
+          "partialProtocol": false,
+          "connectionMode": "reusedClient (physical connection reuse not instrumented)",
+          "retryMode": "Application OFF / transparent transport recovery not instrumented"
+        },
+        "logicalOperations": [],
+        "attempts": [
+          {
+            "attemptId": "bf2a0b7c-7c6d-4413-aa63-42b9648f12de",
+            "sequence": 1,
+            "logicalOperationId": "d58d979a-5b67-4643-aad1-41f87602f647/1/1",
+            "endpoint": "LIST",
+            "concurrency": 1,
+            "retryIndex": 0,
+            "groupWidth": 1,
+            "outcome": "HTTP_RESPONSE",
+            "httpCode": 500,
+            "elapsedMs": 623.103434,
+            "queueWaitMs": 0.141267,
+            "startedAt": "2026-10-11T18:14:18.963186765Z",
+            "endedAt": "2026-10-11T18:14:19.586298949Z",
+            "requestTimeoutMs": 30000,
+            "httpVersion": "HTTP_1_1",
+            "responseBytes": 119,
+            "retryAfter": {
+              "header": null,
+              "headerMs": null,
+              "bodyMs": null,
+              "invalidHeader": false,
+              "conflict": false
+            },
+            "issues": []
+          }
+        ]
+      },
+      "runId": "d58d979a-5b67-4643-aad1-41f87602f647",
+      "caseId": "80d9889e-fee1-4669-94c1-36f8fcf775cc",
+      "campaignId": "d0b4e21a-7d5e-4bb5-ac12-f5b5e96494da",
+      "recordingStatus": "STOPPED",
+      "stale": false
+    }
+  ]
+}

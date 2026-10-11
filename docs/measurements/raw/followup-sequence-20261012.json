@@ -1,0 +1,99 @@
+{
+  "phaseId": "followup-sequence-20261012",
+  "parentSuiteId": "followup-seed-20261012-d19050c7",
+  "source": "EXTERNAL",
+  "approvedHttpCeiling": 130,
+  "approvedPostCeiling": 4,
+  "priorActualHttp": 13,
+  "priorActualPost": 2,
+  "actualHttp": 5,
+  "actualPost": 0,
+  "plannedUpperBound": 24,
+  "status": "ENDED_WITH_GUARD_STOP",
+  "runs": [
+    {
+      "runId": "0f2532a0-73c0-43ea-b9a1-d7a49afe4562",
+      "campaignId": "c4b9beda-d514-4894-8bdb-9fc700e3d2c3",
+      "family": "R01",
+      "state": "COMPLETED",
+      "reason": null,
+      "actualHttp": 1,
+      "actualPost": 0
+    },
+    {
+      "runId": "d58d979a-5b67-4643-aad1-41f87602f647",
+      "campaignId": "d0b4e21a-7d5e-4bb5-ac12-f5b5e96494da",
+      "family": "P01",
+      "state": "STOPPED",
+      "reason": "OBSERVED_ERROR",
+      "actualHttp": 1,
+      "actualPost": 0
+    },
+    {
+      "runId": "ccc9290e-06c6-4f9c-9c76-e409eb068e4d",
+      "campaignId": "07d10634-d071-4c95-911c-56000359968d",
+      "family": "C03",
+      "state": "STOPPED",
+      "reason": "RETRY_AFTER_OR_OVERLOAD",
+      "actualHttp": 3,
+      "actualPost": 0
+    }
+  ],
+  "plannedProcedures": [
+    {
+      "family": "R01",
+      "variant": "SHORT",
+      "block": 1,
+      "order": 1,
+      "maxHttp": 2
+    },
+    {
+      "family": "R03",
+      "variants": [
+        "FIXED",
+        "EXPONENTIAL"
+      ],
+      "block": 1,
+      "maxHttp": 6,
+      "precondition": "R01 observed initial 500 and failed first retry; server predecessor and stop guards remain enforced"
+    },
+    {
+      "family": "P01",
+      "maxHttp": 7,
+      "precondition": "No active overload or wait hint; existing pending only, no replacement POST"
+    },
+    {
+      "family": "C03",
+      "levels": [
+        1,
+        2,
+        3
+      ],
+      "maxHttp": 9,
+      "precondition": "No active overload or wait hint; ordered levels with 30-second cooldown"
+    }
+  ],
+  "stopRules": "No escalation after overload, rate limit, wait hint, transport or contract/storage failure. R01/R03 retry only naturally observed GET 500 within their bounded protocol. Unstarted requests remain unobserved.",
+  "privacy": "Credentials, target identifiers and response bodies excluded",
+  "omissions": [
+    {
+      "family": "R03",
+      "maxHttp": 6,
+      "reason": "R01 initial 200; no eligible initial500 or failed first retry"
+    },
+    {
+      "family": "P01",
+      "maxHttp": 6,
+      "reason": "Initial LIST500 stopped polling before pending selection"
+    },
+    {
+      "family": "C03",
+      "levels": [
+        2,
+        3
+      ],
+      "maxHttp": 6,
+      "reason": "Preceding level stopped after HTTP503 and 30-second body wait hint"
+    }
+  ]
+}

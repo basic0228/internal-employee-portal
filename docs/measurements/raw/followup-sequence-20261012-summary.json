@@ -1,0 +1,167 @@
+{
+  "phaseId": "followup-sequence-20261012",
+  "actualHttp": 5,
+  "actualPost": 0,
+  "totalActualHttp": 18,
+  "totalActualPost": 2,
+  "remainingHttp": 112,
+  "remainingPost": 2,
+  "cohorts": [
+    {
+      "runId": "0f2532a0-73c0-43ea-b9a1-d7a49afe4562",
+      "protocol": {
+        "family": "R01",
+        "variant": "SHORT",
+        "block": 1,
+        "order": 1
+      },
+      "revision": "aa9d9d39a74ba1d94abaa26189909dded2b3f38a",
+      "cohort": "LIST/HTTP_RESPONSE/200",
+      "metric": "completed_http_ms",
+      "latency": {
+        "n": 1,
+        "mean": 2481.560618,
+        "p50": 2481.560618,
+        "p95": 2481.560618,
+        "p99": 2481.560618,
+        "max": 2481.560618,
+        "meanMedianGap": 0,
+        "p95Ratio": 1,
+        "maxRatio": 1,
+        "outliers": [],
+        "tailRanks": [
+          1,
+          1
+        ],
+        "tailValues": [
+          2481.560618,
+          2481.560618
+        ]
+      }
+    },
+    {
+      "runId": "d58d979a-5b67-4643-aad1-41f87602f647",
+      "protocol": {
+        "family": "P01",
+        "variant": "DEFAULT",
+        "block": 0,
+        "order": 0
+      },
+      "revision": "aa9d9d39a74ba1d94abaa26189909dded2b3f38a",
+      "cohort": "LIST/HTTP_RESPONSE/500",
+      "metric": "completed_http_ms",
+      "latency": {
+        "n": 1,
+        "mean": 623.103434,
+        "p50": 623.103434,
+        "p95": 623.103434,
+        "p99": 623.103434,
+        "max": 623.103434,
+        "meanMedianGap": 0,
+        "p95Ratio": 1,
+        "maxRatio": 1,
+        "outliers": [],
+        "tailRanks": [
+          1,
+          1
+        ],
+        "tailValues": [
+          623.103434,
+          623.103434
+        ]
+      }
+    },
+    {
+      "runId": "ccc9290e-06c6-4f9c-9c76-e409eb068e4d",
+      "protocol": {
+        "family": "C03",
+        "variant": "DEFAULT",
+        "block": 1,
+        "order": 1
+      },
+      "revision": "aa9d9d39a74ba1d94abaa26189909dded2b3f38a",
+      "cohort": "LIST/HTTP_RESPONSE/200",
+      "metric": "completed_http_ms",
+      "latency": {
+        "n": 2,
+        "mean": 15180.328348,
+        "p50": 15180.328348,
+        "p95": 15369.114742,
+        "p99": 15385.8957548,
+        "max": 15390.091008,
+        "meanMedianGap": 0,
+        "p95Ratio": 1.0124362523439667,
+        "maxRatio": 1.0138180581599632,
+        "outliers": [],
+        "tailRanks": [
+          1,
+          2
+        ],
+        "tailValues": [
+          14970.565688,
+          15390.091008
+        ]
+      }
+    },
+    {
+      "runId": "ccc9290e-06c6-4f9c-9c76-e409eb068e4d",
+      "protocol": {
+        "family": "C03",
+        "variant": "DEFAULT",
+        "block": 1,
+        "order": 1
+      },
+      "revision": "aa9d9d39a74ba1d94abaa26189909dded2b3f38a",
+      "cohort": "LIST/HTTP_RESPONSE/503",
+      "metric": "completed_http_ms",
+      "latency": {
+        "n": 1,
+        "mean": 218.234213,
+        "p50": 218.234213,
+        "p95": 218.234213,
+        "p99": 218.234213,
+        "max": 218.234213,
+        "meanMedianGap": 0,
+        "p95Ratio": 1,
+        "maxRatio": 1,
+        "outliers": [],
+        "tailRanks": [
+          1,
+          1
+        ],
+        "tailValues": [
+          218.234213,
+          218.234213
+        ]
+      }
+    }
+  ],
+  "retries": [
+    {
+      "runId": "0f2532a0-73c0-43ea-b9a1-d7a49afe4562",
+      "n": 1,
+      "eligibleN": 0,
+      "followupN": 0,
+      "recoveredN": 0,
+      "deferredN": 0,
+      "recoveryPercent": null,
+      "retryCalls": 0
+    }
+  ],
+  "workflows": [],
+  "hashes": [
+    {
+      "runId": "0f2532a0-73c0-43ea-b9a1-d7a49afe4562",
+      "sha256": "e9f5fe40eacfdf2414e5da625bc4102792b7bd8d735e5960023a3c649aedf5d8"
+    },
+    {
+      "runId": "d58d979a-5b67-4643-aad1-41f87602f647",
+      "sha256": "ddd61816306e1f3ce8b6c9bf4fc7eab7d3ac16315d7960e7c640121e225fbb34"
+    },
+    {
+      "runId": "ccc9290e-06c6-4f9c-9c76-e409eb068e4d",
+      "sha256": "6244a01c51afaee6ddddbb65cd5f72337e7caadea11d47dc5ac2fc1d24e84458"
+    }
+  ],
+  "limitation": "Error-dependent stopping and unequal cohorts; no causal recovery estimate or fabricated unstarted observations"
+}
