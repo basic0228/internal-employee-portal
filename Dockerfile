@@ -6,7 +6,9 @@ COPY frontend/package*.json ./
 RUN npm ci
 
 COPY frontend/ ./
-RUN npm run build
+# Non-secret opt-in build flag. Runtime variables cannot change a compiled Vite bundle.
+ARG VITE_PORTAL_UI_ENABLED=false
+RUN VITE_PORTAL_UI_ENABLED=$VITE_PORTAL_UI_ENABLED npm run build
 
 
 # 2. Spring Boot 빌드

@@ -6,14 +6,15 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:lab": "node --test src/lab/analysis.test.js"
   },
   "dependencies": {
-    "@primeuix/themes": "^3.0.1",
+    "@primeuix/themes": "1.2.5",
     "axios": "^1.20.0",
     "pinia": "^4.0.3",
-    "primeicons": "^8.0.2",
-    "primevue": "^5.0.2",
+    "primeicons": "7.0.0",
+    "primevue": "4.5.5",
     "vue": "^3.5.42",
     "vue-router": "^5.4.0"
   },

@@ -10,3 +10,6 @@
 !.env.example
 
 *.log
+
+# Local verification tools and Maven cache; never deploy these.
+.tools/

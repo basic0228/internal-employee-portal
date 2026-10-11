@@ -1,0 +1,18 @@
+# Opt in only after applying the SQL migrations to a separate development DB.
+# Never activate this profile on Railway before reviewing security and DB changes.
+portal:
+  bootstrap:
+    admin-username: ${PORTAL_ADMIN_USERNAME:}
+    admin-password: ${PORTAL_ADMIN_PASSWORD:}
+
+# Local opt-in only. External calls require a separately approved test plan.
+lab:
+  enabled: ${LAB_ENABLED:false}
+  post-enabled: ${LAB_POST_ENABLED:false}
+background-check:
+  external-enabled: ${BG_EXTERNAL_ENABLED:false}
+  enabled: ${BG_ENABLED:false}
+  candidate-key: ${X_CANDIDATE_KEY:}
+  client:
+    connect-timeout-ms: ${BG_CONNECT_TIMEOUT_MS:0}
+    request-timeout-ms: ${BG_REQUEST_TIMEOUT_MS:0}

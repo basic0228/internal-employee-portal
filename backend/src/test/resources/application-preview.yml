@@ -1,0 +1,33 @@
+server:
+  address: 127.0.0.1
+# Temporary browser verification only: excluded from the production JAR.
+spring:
+  datasource:
+    url: jdbc:h2:mem:portal-preview;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  sql:
+    init:
+      mode: always
+      encoding: UTF-8
+      schema-locations:
+        - classpath:db/migration/V1__employees_and_accounts.sql
+        - classpath:db/migration/V3__employee_contact_fields.sql
+      data-locations: classpath:db/migration/V2__required_employee_seed.sql
+portal:
+  bootstrap:
+    admin-username: preview-admin
+    admin-password: PreviewPassword1
+
+# Test-only local API fixture; never an external measurement.
+lab:
+  enabled: true
+  post-enabled: true
+background-check:
+  base-url: http://127.0.0.1:18081
+  enabled: true
+  candidate-key: preview-test-key
+  client:
+    connect-timeout-ms: 1000
+    request-timeout-ms: 3000
