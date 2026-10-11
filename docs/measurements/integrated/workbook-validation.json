@@ -1,0 +1,33 @@
+{
+  "calculation": {
+    "actualRuns": 39,
+    "actualAttempts": 65,
+    "completedHttp": 55,
+    "formulaErrors": 0,
+    "candidateEditRestore": "PASS",
+    "visual": "NATIVE_RENDER_UNAVAILABLE",
+    "renderError": "Native renderer unavailable: Vulkan initialization failed on this host; use read-only layout previews",
+    "nativeExcel": "NOT_TESTED"
+  },
+  "exportAndLayout": {
+    "rawRows": 65,
+    "uniqueRuns": 39,
+    "formulaErrors": [],
+    "clippedPreviewCells": [],
+    "previews": [
+      "Summary-1-fallback.png",
+      "Candidates-1-fallback.png",
+      "Candidates-2-fallback.png",
+      "Candidates-3-fallback.png",
+      "Cohorts-1-fallback.png",
+      "Attempts-1-fallback.png",
+      "Runs-1-fallback.png"
+    ],
+    "visual": "XML_APPROXIMATION_ONLY",
+    "nativeExcel": "NOT_TESTED",
+    "sourceHashes": "PASS",
+    "exactExportedValues": "PASS"
+  },
+  "reviewed": "2026-10-12 KST",
+  "scope": "Read-only exported XLSX verification; native Excel not tested"
+}
