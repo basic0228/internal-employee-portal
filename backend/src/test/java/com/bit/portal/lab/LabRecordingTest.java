@@ -158,6 +158,31 @@ class LabRecordingTest {
         assertThatThrownBy(()->runner.reserve(owner,r,id,cases.get(1).path("caseId").asText())).isInstanceOf(ResponseStatusException.class);
         assertThat(api.calls.get()).isZero();
     }
+    @Test void comparison500CompletionIsStoredButCooldownAndStoppedPredecessorBlockNextLevel() throws Exception {
+        var cs=new ArrayList<LabCampaignRequest.Case>();
+        for(int c=1;c<=3;c++) cs.add(new LabCampaignRequest.Case(LabRequest.Type.GET_FIXED,LabRequest.Endpoint.LIST,
+            LabCampaignRequest.Unit.REQUESTS,3,c,5000,30000,2000,5000,6,new LabProtocol(LabProtocol.Family.C03,LabProtocol.Variant.DEFAULT,1,c)));
+        var plan=recordings.create(owner,new LabCampaignRequest(cs));String id=(String)plan.get("campaignId");
+        var cases=json.valueToTree(plan).path("cases");
+        assertThatThrownBy(()->recordings.create(owner,new LabCampaignRequest(List.of(cs.get(2))))).isInstanceOf(ResponseStatusException.class);
+        assertThatThrownBy(()->recordings.create(owner,new LabCampaignRequest(List.of(cs.get(2),cs.get(1),cs.get(0))))).isInstanceOf(ResponseStatusException.class);
+        java.util.function.IntFunction<LabRequest> req=c->new LabRequest("PRIVATE_TEST_KEY",LabRequest.Type.GET_FIXED,LabRequest.Endpoint.LIST,
+            "PRIVATE_EMPLOYEE_ID",null,null,null,null,3,c,5000,30000,120000,2000,5000,6,3,false,cs.get(c-1).protocol(),true);
+        assertThatThrownBy(()->runner.reserve(owner,req.apply(2),id,cases.get(1).path("caseId").asText())).isInstanceOf(ResponseStatusException.class);
+        api.mode="INTERNAL_ERROR";
+        var first=execute(req.apply(1),id,cases.get(0).path("caseId").asText(),new ByteArrayOutputStream());
+        assertThat(first.path("run").path("state").asText()).isEqualTo("COMPLETED");assertThat(api.calls.get()).isEqualTo(3);
+        assertThatThrownBy(()->runner.reserve(owner,req.apply(2),id,cases.get(1).path("caseId").asText())).isInstanceOf(ResponseStatusException.class);
+        // Only the H2 test fixture clock is moved; no external waiting or production mutation.
+        ((com.fasterxml.jackson.databind.node.ObjectNode)first.path("run")).put("updatedAt",java.time.Instant.now().minusSeconds(31).toString());
+        recordings.checkpoint(first.path("run").path("runId").asText(),owner,json.convertValue(first,new com.fasterxml.jackson.core.type.TypeReference<Map<String,Object>>(){}));
+        api.mode="OVERLOAD";
+        var second=execute(req.apply(2),id,cases.get(1).path("caseId").asText(),new ByteArrayOutputStream());
+        assertThat(second.path("run").path("state").asText()).isEqualTo("STOPPED");
+        int calls=api.calls.get();assertThat(calls).isLessThanOrEqualTo(5);
+        assertThatThrownBy(()->runner.reserve(owner,req.apply(3),id,cases.get(2).path("caseId").asText())).isInstanceOf(ResponseStatusException.class);
+        assertThat(api.calls.get()).isEqualTo(calls);
+    }
     MockHttpSession login(String username) throws Exception {
         return (MockHttpSession)mvc.perform(post("/api/auth/login").with(csrf()).param("username",username).param("password","RecordTestPassword1"))
             .andExpect(status().isNoContent()).andReturn().getRequest().getSession(false);

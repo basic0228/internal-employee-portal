@@ -38,6 +38,11 @@ public final class MockBackgroundApi implements AutoCloseable {
             if("OVERLOAD".equals(mode)) { x.getResponseHeaders().add("Retry-After","2");send(x,503,Map.of("retryAfter",3));return; }
             if("NOT_FOUND".equals(mode)) { send(x,404,Map.of("error","Not Found"));return; }
             if("INTERNAL_ERROR".equals(mode)) { send(x,500,Map.of("error","Internal Server Error"));return; }
+            if("ERROR_EMPTY".equals(mode)) {send(x,500,Map.of());return;}
+            if("ERROR_FIELDS".equals(mode)) {send(x,500,Map.of("error",42,"statusCode",200));return;}
+            if("ERROR_JSON".equals(mode)) {sendRaw(x,500,"not-json");return;}
+            if("ERROR_HINT".equals(mode)) {send(x,500,Map.of("retryAfter",30));return;}
+            if("ERROR_INVALID_HINT".equals(mode)) {x.getResponseHeaders().add("Retry-After","invalid");send(x,500,Map.of());return;}
             if("BROKEN".equals(mode)) { sendRaw(x,200,"not-json");return; }
             if("LARGE".equals(mode)) { sendRaw(x,200,"x".repeat(270000));return; }
             if("SLOW".equals(mode) || "SLOW_POST".equals(mode) && "POST".equals(x.getRequestMethod())) sleep(350);

@@ -38,7 +38,7 @@ public class LabRunner {
             "source",client.source(), "maxCalls",20, "maxConcurrency",3, "maxDurationMs",120000,
             "transport","Java 21 HttpClient / HTTP_1_1 / request + whole-body deadline",
             "transparentRetry","Default application retry OFF; explicit bounded GET_RETRY is opt-in; transport recovery not wire-instrumented",
-            "followupProtocolVersion","1",
+            "followupProtocolVersion","2",
             "recordingEnabled",recordings!=null && recordings.enabled());
     }
     public Control reserve(long owner, LabRequest request) {
@@ -108,6 +108,8 @@ public class LabRunner {
                 (p.family()==LabProtocol.Family.P02 ? r.pollIntervalMs()==5000 : Set.of(2000,5000,10000).contains(r.pollIntervalMs()));
             case C01, C02 -> r.type()==LabRequest.Type.GET_FIXED && r.endpoint()==(p.family()==LabProtocol.Family.C01?LabRequest.Endpoint.LIST:LabRequest.Endpoint.DETAIL) &&
                 r.repeats()==3 && r.requestTimeoutMs()==30000 && r.concurrency()==((p.block()+p.order()-2)%3)+1;
+            case C03 -> r.type()==LabRequest.Type.GET_FIXED && r.endpoint()==LabRequest.Endpoint.LIST &&
+                r.repeats()==3 && r.requestTimeoutMs()==30000 && r.concurrency()==p.order();
             case N01 -> false; // Independent runs cannot prove reuse of a previous run's client/connection.
         };
         if(!valid || r.intervalMs()!=2000 || r.connectTimeoutMs()!=5000)
@@ -185,6 +187,9 @@ public class LabRunner {
                 "durationMs",r.durationMs(),"intervalMs",r.intervalMs(),"pollIntervalMs",r.pollIntervalMs(),
                 "maxPolls",r.maxPolls(),"callBudget",r.callBudget()));
             map.put("protocol",r.protocol());
+            map.put("comparisonErrorPolicy",r.protocol()!=null && r.protocol().family()==LabProtocol.Family.C03
+                ? "Valid HTTP 500 recorded without retry; overload, wait hint, transport, contract and storage errors stop"
+                : "Default campaign stop policy / explicit retry exceptions only");
             map.put("maxClientCallsInFlight",maxInFlight.get());
             map.put("javaVersion",System.getProperty("java.version")); map.put("client","JDK HttpClient HTTP_1_1");
             map.put("revision",System.getenv().getOrDefault("RAILWAY_GIT_COMMIT_SHA","LOCAL_UNRECORDED"));
@@ -285,16 +290,29 @@ public class LabRunner {
                             }
                         }
                     }
+                } else if(r.protocol()!=null && r.protocol().family()==LabProtocol.Family.C03) {
+                    // ErrorResponse fields are optional in Swagger. Validate present fields, without storing their content.
+                    for(String field:List.of("error","message"))
+                        if(body.has(field) && !body.path(field).isTextual()) issues.add("INVALID_ERROR_"+field.toUpperCase(Locale.ROOT));
+                    if(body.has("statusCode") && (!body.path("statusCode").isIntegralNumber() || body.path("statusCode").asInt()!=reply.httpCode()))
+                        issues.add("ERROR_STATUS_CODE_MISMATCH");
                 }
             }
             if(reply.transportIssue()!=null) issues.add(reply.transportIssue());
+            if(r.protocol()!=null && r.protocol().family()==LabProtocol.Family.C03 && (reply.retry().invalidHeader()
+                || body!=null && body.has("retryAfter") && (!body.path("retryAfter").isIntegralNumber() || reply.retry().bodyMs()==null)))
+                issues.add("INVALID_RETRY_AFTER");
             row.put("issues",issues); attempts.add(row);
             if(reply.httpCode()!=null && (reply.httpCode()==401 || reply.httpCode()==404)) control.stop("HTTP_"+reply.httpCode());
             boolean allowedRetry=r.type()==LabRequest.Type.GET_RETRY && eligible(reply) && retryIndex<r.protocol().maxRetries()
                 && ("HTTP_RESPONSE".equals(reply.outcome())?issues.isEmpty():"REQUEST_TIMEOUT".equals(reply.outcome()));
+            // C03 samples a fixed number of independent GETs. Continuing after 500 is not a retry or a success.
+            boolean allowedComparison500=r.protocol()!=null && r.protocol().family()==LabProtocol.Family.C03
+                && "HTTP_RESPONSE".equals(reply.outcome()) && Objects.equals(reply.httpCode(),500)
+                && issues.isEmpty() && reply.retry().preferredMs()==null;
             if(!allowedRetry && (reply.httpCode()!=null && (reply.httpCode()==503 || reply.httpCode()==429) || reply.retry().preferredMs()!=null)) control.stop("RETRY_AFTER_OR_OVERLOAD");
             if(ok && !issues.isEmpty()) control.stop("CONTRACT_MISMATCH");
-            if(!allowedRetry && (control.campaignId!=null || r.protocol()!=null) && (!"HTTP_RESPONSE".equals(reply.outcome()) || !ok || !issues.isEmpty()))
+            if(!allowedRetry && !allowedComparison500 && (control.campaignId!=null || r.protocol()!=null) && (!"HTTP_RESPONSE".equals(reply.outcome()) || !ok || !issues.isEmpty()))
                 control.stop("OBSERVED_ERROR"); // Campaigns stop before another group; in-flight replies are still collected.
             event("progress",Map.of("run",run(),"attempt",row));
         }

@@ -1,0 +1,308 @@
+{
+  "suiteId": "followup-seed-20261012-d19050c7",
+  "runs": 7,
+  "actualHttp": 9,
+  "actualPost": 2,
+  "completedHttp": 7,
+  "statuses": [
+    {
+      "value": 503,
+      "count": 2,
+      "denominator": 9
+    },
+    {
+      "value": 200,
+      "count": 2,
+      "denominator": 9
+    },
+    {
+      "value": "UNOBSERVED",
+      "count": 2,
+      "denominator": 9
+    },
+    {
+      "value": 201,
+      "count": 2,
+      "denominator": 9
+    },
+    {
+      "value": 500,
+      "count": 1,
+      "denominator": 9
+    }
+  ],
+  "outcomes": [
+    {
+      "value": "HTTP_RESPONSE",
+      "count": 7,
+      "denominator": 9
+    },
+    {
+      "value": "REQUEST_TIMEOUT",
+      "count": 2,
+      "denominator": 9
+    }
+  ],
+  "cohorts": [
+    {
+      "key": "LIST/HTTP_RESPONSE/503",
+      "metric": "completed_http_ms",
+      "latency": {
+        "n": 2,
+        "mean": 931.7584664999999,
+        "p50": 931.7584664999999,
+        "p95": 1251.75724515,
+        "p99": 1280.20158103,
+        "max": 1287.312665,
+        "meanMedianGap": 0,
+        "p95Ratio": 1.3434353323904034,
+        "maxRatio": 1.3815948137671148,
+        "outliers": [],
+        "tailRanks": [
+          1,
+          2
+        ],
+        "tailValues": [
+          576.204268,
+          1287.312665
+        ]
+      }
+    },
+    {
+      "key": "LIST/HTTP_RESPONSE/200",
+      "metric": "completed_http_ms",
+      "latency": {
+        "n": 2,
+        "mean": 22161.359006,
+        "p50": 22161.359006,
+        "p95": 26418.2430509,
+        "p99": 26796.63274378,
+        "max": 26891.230167,
+        "meanMedianGap": 0,
+        "p95Ratio": 1.192085875408069,
+        "maxRatio": 1.21342875045341,
+        "outliers": [],
+        "tailRanks": [
+          1,
+          2
+        ],
+        "tailValues": [
+          17431.487845,
+          26891.230167
+        ]
+      }
+    },
+    {
+      "key": "LIST/REQUEST_TIMEOUT/UNOBSERVED",
+      "metric": "interruption_elapsed_ms",
+      "latency": {
+        "n": 1,
+        "mean": 30001.970011,
+        "p50": 30001.970011,
+        "p95": 30001.970011,
+        "p99": 30001.970011,
+        "max": 30001.970011,
+        "meanMedianGap": 0,
+        "p95Ratio": 1,
+        "maxRatio": 1,
+        "outliers": [],
+        "tailRanks": [
+          1,
+          1
+        ],
+        "tailValues": [
+          30001.970011,
+          30001.970011
+        ]
+      }
+    },
+    {
+      "key": "CREATE/HTTP_RESPONSE/201",
+      "metric": "completed_http_ms",
+      "latency": {
+        "n": 2,
+        "mean": 728.3468555,
+        "p50": 728.3468555,
+        "p95": 796.08458645,
+        "p99": 802.10571809,
+        "max": 803.611001,
+        "meanMedianGap": 0,
+        "p95Ratio": 1.0930020229214816,
+        "maxRatio": 1.1033355810238685,
+        "outliers": [],
+        "tailRanks": [
+          1,
+          2
+        ],
+        "tailValues": [
+          653.08271,
+          803.611001
+        ]
+      }
+    },
+    {
+      "key": "DETAIL/REQUEST_TIMEOUT/UNOBSERVED",
+      "metric": "interruption_elapsed_ms",
+      "latency": {
+        "n": 1,
+        "mean": 30001.117693,
+        "p50": 30001.117693,
+        "p95": 30001.117693,
+        "p99": 30001.117693,
+        "max": 30001.117693,
+        "meanMedianGap": 0,
+        "p95Ratio": 1,
+        "maxRatio": 1,
+        "outliers": [],
+        "tailRanks": [
+          1,
+          1
+        ],
+        "tailValues": [
+          30001.117693,
+          30001.117693
+        ]
+      }
+    },
+    {
+      "key": "DETAIL/HTTP_RESPONSE/500",
+      "metric": "completed_http_ms",
+      "latency": {
+        "n": 1,
+        "mean": 229.141253,
+        "p50": 229.141253,
+        "p95": 229.141253,
+        "p99": 229.141253,
+        "max": 229.141253,
+        "meanMedianGap": 0,
+        "p95Ratio": 1,
+        "maxRatio": 1,
+        "outliers": [],
+        "tailRanks": [
+          1,
+          1
+        ],
+        "tailValues": [
+          229.141253,
+          229.141253
+        ]
+      }
+    }
+  ],
+  "retries": [
+    {
+      "runId": "9a1de23e-044b-49f9-aba4-6dc2e60323b9",
+      "n": 1,
+      "eligibleN": 0,
+      "followupN": 0,
+      "recoveredN": 0,
+      "deferredN": 0,
+      "recoveryPercent": null,
+      "retryCalls": 0
+    },
+    {
+      "runId": "36a7e27c-3067-4620-a8db-e0690228ff33",
+      "n": 1,
+      "eligibleN": 0,
+      "followupN": 0,
+      "recoveredN": 0,
+      "deferredN": 0,
+      "recoveryPercent": null,
+      "retryCalls": 0
+    },
+    {
+      "runId": "fa596d81-c243-483c-bf12-8df0a40f2ea1",
+      "n": 1,
+      "eligibleN": 0,
+      "followupN": 0,
+      "recoveredN": 0,
+      "deferredN": 0,
+      "recoveryPercent": null,
+      "retryCalls": 0
+    }
+  ],
+  "listSuccessTimeoutCandidates": [
+    {
+      "candidate": 10000,
+      "n": 3,
+      "exceeds": 2,
+      "within": 0,
+      "unknown": 1,
+      "httpN": 2,
+      "httpExceeds": 2,
+      "httpRatio": 100
+    },
+    {
+      "candidate": 30000,
+      "n": 3,
+      "exceeds": 0,
+      "within": 2,
+      "unknown": 1,
+      "httpN": 2,
+      "httpExceeds": 0,
+      "httpRatio": 0
+    },
+    {
+      "candidate": 60000,
+      "n": 3,
+      "exceeds": 0,
+      "within": 2,
+      "unknown": 1,
+      "httpN": 2,
+      "httpExceeds": 0,
+      "httpRatio": 0
+    }
+  ],
+  "workflowN": 2,
+  "terminalWorkflowN": 0,
+  "exactBusinessTimeN": 0,
+  "executedProcedureCeiling": 30,
+  "untouchedCeiling": 100,
+  "unusedInExecutedProcedures": 21,
+  "totalUnusedCeiling": 121,
+  "hashes": [
+    {
+      "runId": "af283831-9960-4b48-a7ca-612720d4e20f",
+      "campaignId": "d19050c7-b8e4-4397-8afe-9b40b5cd0c9d",
+      "runSha256": "25c694407b5cce3526fb29fc1cfd84a76d41f91a6dc0a419fe053c715e8fc703",
+      "campaignSha256": "d5cd834fdd1e1d0ec09b45cd3c63cc203390c89067b498bac497f4ce35ab6b3c"
+    },
+    {
+      "runId": "9a1de23e-044b-49f9-aba4-6dc2e60323b9",
+      "campaignId": "f6740d43-b428-4489-a533-40889e985d99",
+      "runSha256": "a6d40424f18655649c1f933298d637ec948ed0a340fe28c5145e86c335952239",
+      "campaignSha256": "6910389b1a70e8b0e496833765faa0dc9aa19e6086767c54ae281b2dbf63c0fa"
+    },
+    {
+      "runId": "36a7e27c-3067-4620-a8db-e0690228ff33",
+      "campaignId": "3b6621c9-bc12-4cb3-9720-d2fd5ee1da21",
+      "runSha256": "947e42d150b5eff16a28f53cc71045fb45fc6257690c3cf9e1d0b5b5ca5d97dc",
+      "campaignSha256": "e924002e23cf99a8ce94da072513ba3193f5f41248264710aff99ac91f3623b8"
+    },
+    {
+      "runId": "fa596d81-c243-483c-bf12-8df0a40f2ea1",
+      "campaignId": "d5497303-0797-4d53-9d49-f2ae1bb7ab82",
+      "runSha256": "c83f0c966218f48834d8e9f4f57f4c045738ca33c7e1d39dab2909e4b268eb85",
+      "campaignSha256": "bf5a65170b3bc4f007843645ace2db2cf61011f85f638c4fc3277999d97d6dc0"
+    },
+    {
+      "runId": "00fcd3c4-ce33-448b-a1c3-c5b8617139a3",
+      "campaignId": "27af3e04-26c5-4de1-9025-946ed53d57bc",
+      "runSha256": "850ac4e06cb8dd37e13925da013990304484baf9be04babfaa2dc22ffc239795",
+      "campaignSha256": "231723a1da24223524aafc2f3829b2d06e4b41c497879401fd1a9041ad8d25f9"
+    },
+    {
+      "runId": "4ff4f593-c904-4916-a2da-937217b90c98",
+      "campaignId": "ae6ce636-adec-430b-bdac-53deb0057b5d",
+      "runSha256": "b5d8ddbfe8df383d264cf1715da7fa74a827015ee1d480058c9d529f2f4ef4d6",
+      "campaignSha256": "3e420c78d7aff9ed88ae521b2f72e0a24d8b334c2c141b7418160eca8dc1bfdd"
+    },
+    {
+      "runId": "a42e5d55-0aa3-4a75-9f70-418a803de39d",
+      "campaignId": "a769d7b9-551d-4574-8bf2-e8262d996b52",
+      "runSha256": "8fed876ead7acb479f493b910b9518fff8fb16d722ad94ce63f12ca1880954cf",
+      "campaignSha256": "7c9d1ade2505adb84a5ee6d1997f44b27a5d6e21142541691ea8bdc5b7cf1973"
+    }
+  ],
+  "limitation": "Descriptive pilot with error-dependent stopping; interruption durations are not completed latency; no causal retry or polling effect estimated"
+}

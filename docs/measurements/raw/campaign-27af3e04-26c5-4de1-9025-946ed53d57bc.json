@@ -1,0 +1,120 @@
+{
+  "plan": {
+    "campaignId": "27af3e04-26c5-4de1-9025-946ed53d57bc",
+    "maxHttpCalls": 7,
+    "goalMeaning": "Observed HTTP attempts, including GET, POST, polling and failures; never count unstarted calls",
+    "cases": [
+      {
+        "caseId": "63a06e8a-cc76-42bb-bc8e-ca0a17fe53b8",
+        "conditions": {
+          "type": "POLL_EXISTING",
+          "endpoint": "LIST",
+          "unit": "REQUESTS",
+          "goal": 7,
+          "concurrency": 1,
+          "connectTimeoutMs": 5000,
+          "requestTimeoutMs": 30000,
+          "intervalMs": 2000,
+          "pollIntervalMs": 5000,
+          "maxPolls": 6,
+          "protocol": {
+            "family": "P01",
+            "variant": "DEFAULT",
+            "block": 0,
+            "order": 0
+          }
+        }
+      }
+    ],
+    "scope": "metadata only; targets and keys are not stored"
+  },
+  "runs": [
+    {
+      "result": {
+        "attempts": [
+          {
+            "attemptId": "ed588abb-3a47-4af5-9c9e-461050440645",
+            "sequence": 1,
+            "logicalOperationId": "00fcd3c4-ce33-448b-a1c3-c5b8617139a3/1/1",
+            "endpoint": "LIST",
+            "concurrency": 1,
+            "retryIndex": 0,
+            "groupWidth": 1,
+            "outcome": "HTTP_RESPONSE",
+            "httpCode": 503,
+            "elapsedMs": 576.204268,
+            "queueWaitMs": 0.1028,
+            "startedAt": "2026-10-11T17:12:59.074291842Z",
+            "endedAt": "2026-10-11T17:12:59.650498770Z",
+            "requestTimeoutMs": 30000,
+            "httpVersion": "HTTP_1_1",
+            "responseBytes": 152,
+            "retryAfter": {
+              "header": null,
+              "headerMs": null,
+              "bodyMs": 30000,
+              "invalidHeader": false,
+              "conflict": false
+            },
+            "issues": []
+          }
+        ],
+        "phases": [],
+        "workflows": [],
+        "postComparison": {},
+        "run": {
+          "runId": "00fcd3c4-ce33-448b-a1c3-c5b8617139a3",
+          "comparisonGroupId": "00fcd3c4-ce33-448b-a1c3-c5b8617139a3",
+          "type": "POLL_EXISTING",
+          "endpoint": "LIST",
+          "targetAlias": "target-1",
+          "source": "EXTERNAL",
+          "startedAt": "2026-10-11T17:12:59.070389878Z",
+          "updatedAt": "2026-10-11T17:12:59.658467896Z",
+          "reason": "RETRY_AFTER_OR_OVERLOAD",
+          "state": "STOPPED",
+          "plannedUpperBound": 7,
+          "started": 1,
+          "notStarted": 6,
+          "finished": 1,
+          "conditions": {
+            "callBudget": 7,
+            "requestTimeoutMs": 30000,
+            "maxPolls": 6,
+            "pollIntervalMs": 5000,
+            "repeats": 1,
+            "connectTimeoutMs": 5000,
+            "durationMs": 120000,
+            "intervalMs": 2000,
+            "maxConcurrency": 1
+          },
+          "protocol": {
+            "family": "P01",
+            "variant": "DEFAULT",
+            "block": 0,
+            "order": 0
+          },
+          "maxClientCallsInFlight": 1,
+          "javaVersion": "21.0.12.1",
+          "client": "JDK HttpClient HTTP_1_1",
+          "revision": "7d6401751cc839036f4c945d03166f7082bb6a23",
+          "specVersion": "1.1.1",
+          "specSha256": "30e38d5a486238827407063b4ca549e67b5f046c8ad40e560d45a1729eb86d24",
+          "quantileMethod": "TYPE_7",
+          "campaignId": "27af3e04-26c5-4de1-9025-946ed53d57bc",
+          "caseId": "63a06e8a-cc76-42bb-bc8e-ca0a17fe53b8",
+          "recordingEnabled": true,
+          "partialProtocol": false,
+          "connectionMode": "reusedClient (physical connection reuse not instrumented)",
+          "retryMode": "Application OFF / transparent transport recovery not instrumented"
+        },
+        "logicalOperations": []
+      },
+      "runId": "00fcd3c4-ce33-448b-a1c3-c5b8617139a3",
+      "caseId": "63a06e8a-cc76-42bb-bc8e-ca0a17fe53b8",
+      "campaignId": "27af3e04-26c5-4de1-9025-946ed53d57bc",
+      "recordingStatus": "STOPPED",
+      "stale": false
+    }
+  ]
+}

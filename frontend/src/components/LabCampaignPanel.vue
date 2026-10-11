@@ -77,7 +77,7 @@ async function execute() {
       }, abort.signal, selectedPlan.value, entry.caseId)
       await loadPlan()
       if (entry.conditions.protocol) {
-        notice.value = `탐색 절차 종료: ${result.run.state} / ${result.run.reason || '정상'}. 조건부 후속 호출을 생략한 예산은 미사용으로 남깁니다. 다음 케이스는 검토 후 직접 선택하세요.`
+        notice.value = `탐색 절차 종료: ${result.run.state} / ${result.run.reason || '중단 사유 없음'}. 응답 성공 여부는 오류 건수로 확인하세요. 미사용 예산은 남기며 다음 케이스는 검토 후 직접 선택하세요.`
         break
       }
       if (!canContinue(result)) { notice.value = '오류·중단·결과 불명으로 케이스를 멈췄습니다. 저장된 관측을 확인하세요.'; break }
@@ -128,6 +128,7 @@ function loadResult(row) { emit('result', row.result); notice.value = '서버에
         <p>키는 실행 중 메모리에만 유지하고 종료·중단·화면 이탈 시 지웁니다. 개인정보·대상 ID·응답 상세는 서버에 저장하지 않습니다. 같은 관리자 계정으로 다른 PC에서 측정 메타데이터를 조회할 수 있습니다.</p>
         <p v-if="chosen?.conditions.protocol?.family === 'P01'">P01: LIST 1회에서 첫 pending을 선택해 같은 checkId만 최대 6회 관찰합니다. 첫 DETAIL은 즉시, 이후 응답 후 5초 대기합니다. pending이 없으면 생성하지 않고 종료합니다.</p>
         <p v-if="['C01','C02'].includes(chosen?.conditions.protocol?.family)">균형 순서: 1→2→3 / 2→3→1 / 3→1→2. 수준별 GET 3건, 묶음 사이 2초, 수준 사이 최소 30초. 서버가 선행 절차 완료·순서를 검사하고 오류 뒤 다음 수준을 차단합니다. 동시성 2의 마지막 1건은 부분 묶음입니다.</p>
+        <p v-if="chosen?.conditions.protocol?.family === 'C03'">C03 별도 비교: 동시성 1→2→3에 각각 GET 3건, 전체 최대 9건이며 POST·자동 재시도는 없습니다. 정상 형식의 HTTP 500은 오류 표본으로 기록하고 계속합니다. 503·429·대기 안내·타임아웃·계약 오류·저장 실패에서는 중단합니다. 묶음 사이 2초, 수준 사이 최소 30초이며 앞 절차가 완료되어야 다음 수준을 실행할 수 있습니다. 완료는 절차 종료를 뜻하며 정상 응답 여부는 아래 오류 건수로 확인하세요.</p>
         <p>생성 폴링은 POST 응답 후 선택한 폴링 간격을 기다립니다. 즉시 최종이면 GET 0회, 최대 횟수·120초·오류에서 중단합니다. 기존 중복 실험은 이력 GET → POST → 2초 → POST → 이력 GET입니다.</p>
       </div>
       <div class="lab-wide portal-actions"><Button label="선택 케이스 실행/재개" type="submit" :disabled="!ready" :loading="busy" /><Button label="중단" severity="danger" :disabled="!busy" @click="stop" /></div>

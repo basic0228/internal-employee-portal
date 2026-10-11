@@ -27,6 +27,15 @@ public class LabRecordingService {
     private String encode(Object value) { try{return json.writeValueAsString(value);}catch(Exception e){throw error(HttpStatus.INTERNAL_SERVER_ERROR,"실험을 저장할 수 없습니다.");} }
     public Map<String,Object> create(long owner,LabCampaignRequest request) {
         requireEnabled();
+        if(request.cases().stream().anyMatch(c->c.protocol()!=null && c.protocol().family()==LabProtocol.Family.C03)) {
+            // Do not allow a fabricated one-case plan to bypass the preceding levels or the nine-call ceiling.
+            if(request.cases().size()!=3) throw error(HttpStatus.BAD_REQUEST,"C03은 동시성1·2·3의 전체9건 계획만 저장합니다.");
+            for(int i=0;i<3;i++) {
+                var p=request.cases().get(i).protocol();
+                if(p==null || p.family()!=LabProtocol.Family.C03 || p.order()!=i+1)
+                    throw error(HttpStatus.BAD_REQUEST,"C03 계획은 동시성1→2→3 순서입니다.");
+            }
+        }
         var cases=new ArrayList<Map<String,Object>>();int maxCalls=0;
         for(var c:request.cases()) {
             boolean post=c.type()==LabRequest.Type.CREATE_POLL || c.type()==LabRequest.Type.REPEAT_POST;
@@ -35,7 +44,7 @@ public class LabRecordingService {
                 throw error(HttpStatus.BAD_REQUEST,"케이스의 실행 단위·유형·Endpoint를 확인하세요.");
             if(c.protocol()!=null) {
                 var p=c.protocol();
-                int repeats=Set.of(LabProtocol.Family.B01,LabProtocol.Family.C01,LabProtocol.Family.C02).contains(p.family())?3:1;
+                int repeats=Set.of(LabProtocol.Family.B01,LabProtocol.Family.C01,LabProtocol.Family.C02,LabProtocol.Family.C03).contains(p.family())?3:1;
                 var probe=new LabRequest("VALID",c.type(),c.endpoint(),"target","check","first","last","1990-01-01",repeats,c.concurrency(),
                     c.connectTimeoutMs(),c.requestTimeoutMs(),120000,c.intervalMs(),c.pollIntervalMs(),c.maxPolls(),20,true,p,true);
                 LabRunner.validateProtocol(probe);
@@ -75,7 +84,7 @@ public class LabRecordingService {
                 var rows=mapper.campaignRuns(campaignId,owner);
                 if(rows.stream().anyMatch(row->Objects.equals(row.caseId(),caseId)))
                     throw error(HttpStatus.CONFLICT,"이미 실행한 탐색 절차입니다. 검토 후 새 계획으로 명시적으로 다시 실행하세요.");
-                boolean ordered=Set.of(LabProtocol.Family.R01,LabProtocol.Family.R03,LabProtocol.Family.C01,LabProtocol.Family.C02).contains(config.protocol().family());
+                boolean ordered=Set.of(LabProtocol.Family.R01,LabProtocol.Family.R03,LabProtocol.Family.C01,LabProtocol.Family.C02,LabProtocol.Family.C03).contains(config.protocol().family());
                 if(ordered) {
                     JsonNode previous=null;
                     for(var c:plan(owner,campaignId).path("cases")) {if(c.path("caseId").asText().equals(caseId)) break;previous=c;}
@@ -83,7 +92,7 @@ public class LabRecordingService {
                         String priorId=previous.path("caseId").asText();
                         var prior=rows.stream().filter(row->Objects.equals(row.caseId(),priorId)).findFirst().orElse(null);
                         if(prior==null || !"COMPLETED".equals(prior.status())) throw error(HttpStatus.CONFLICT,"앞 절차가 정상 완료되어야 다음 비교를 실행할 수 있습니다.");
-                        if(config.protocol().family()==LabProtocol.Family.C01 || config.protocol().family()==LabProtocol.Family.C02) {
+                        if(Set.of(LabProtocol.Family.C01,LabProtocol.Family.C02,LabProtocol.Family.C03).contains(config.protocol().family())) {
                             var ended=LabRunner.instant(parse(prior.snapshotJson()).path("run").path("updatedAt"));
                             if(ended==null || java.time.Instant.now().isBefore(ended.plusSeconds(30)))
                                 throw error(HttpStatus.CONFLICT,"동시성 수준 사이에 30초 보호 대기가 필요합니다.");

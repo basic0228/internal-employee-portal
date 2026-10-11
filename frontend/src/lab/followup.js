@@ -12,7 +12,8 @@ export const followupPlans = [
   ['R03', 'R03 · Fixed/Exponential 추가 ≤2회 (최대 18 HTTP)'],
   ['R04', 'R04 · GET timeout → 10초 후 60초 GET (최대 2 HTTP)'],
   ['P04', 'P04 · 새 업무별 폴링 2/5/10초 (최대 21 HTTP, POST ≤3)'],
-  ['C02', 'C02 · 최종 DETAIL 균형 3블록 (최대 27 GET)']
+  ['C02', 'C02 · 최종 DETAIL 균형 3블록 (최대 27 GET)'],
+  ['C03', 'C03 · LIST 500 포함 동시성 1/2/3 비교 (최대 9 GET, POST 없음)']
 ].map(([id, label]) => ({ id, label }))
 
 export function followupCases(family) {
@@ -21,6 +22,7 @@ export function followupCases(family) {
   const entry = (overrides = {}, variant = 'DEFAULT', block = 0, order = 0) => ({ ...base, ...overrides,
     protocol: { family, variant, block, order } })
   if (family === 'B01') return [entry({ goal: 3 })]
+  if (family === 'C03') return [1, 2, 3].map(order => entry({ goal: 3, concurrency: order }, 'DEFAULT', 1, order))
   if (family === 'T01') return ['LIST', 'DETAIL'].flatMap(endpoint => [entry({ endpoint, requestTimeoutMs: 60000 }), entry({ endpoint, requestTimeoutMs: 60000 })])
   if (family === 'R01' || family === 'R03') return [1, 2, 3].flatMap(block =>
     (family === 'R01' ? ['SHORT', 'LONG'] : ['FIXED', 'EXPONENTIAL']).map((variant, index) =>

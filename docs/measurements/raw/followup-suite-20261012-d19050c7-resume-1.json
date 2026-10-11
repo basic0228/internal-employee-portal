@@ -1,0 +1,21 @@
+{
+  "parentSuiteId": "followup-seed-20261012-d19050c7",
+  "phase": "remaining-comparisons-readiness-recheck",
+  "source": "EXTERNAL",
+  "approvedHttpCeiling": 130,
+  "approvedPostCeiling": 4,
+  "initialSuiteActualHttp": 9,
+  "additionalHttp": 1,
+  "totalActualHttp": 10,
+  "totalActualPost": 2,
+  "remainingHttp": 120,
+  "runId": "e67172ec-09be-4ea8-8f90-6d410aebdce5",
+  "campaignId": "cbc964ca-9f05-480c-bec2-d68649e53927",
+  "state": "STOPPED",
+  "reason": "OBSERVED_ERROR",
+  "plannedUpperBound": 3,
+  "actualHttp": 1,
+  "unusedWithinProcedure": 2,
+  "comparisonState": "AWAITING_EXPLICIT_500_POLICY_DECISION",
+  "note": "Initial suite remains preserved separately; this is an additional readiness procedure, not a successful comparison"
+}

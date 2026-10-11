@@ -21,7 +21,7 @@ export function nextRequest(conditions, remaining, inputs) {
   const post = isPostType(conditions.type)
   if (conditions.protocol) {
     if (remaining !== conditions.goal) throw new Error('후속 탐색은 절차를 한 번만 실행합니다. 새 계획으로 명시적으로 재실행하세요.')
-    const repeats = ['B01', 'C01', 'C02'].includes(conditions.protocol.family) ? 3 : 1
+    const repeats = ['B01', 'C01', 'C02', 'C03'].includes(conditions.protocol.family) ? 3 : 1
     return { ...conditions, ...inputs, repeats, callBudget: conditions.goal, durationMs,
       postAcknowledged: post, experimentAcknowledged: true }
   }

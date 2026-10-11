@@ -1,0 +1,159 @@
+{
+  "suiteId": "followup-seed-20261012-d19050c7",
+  "status": "ENDED_WITH_GUARD_STOPS",
+  "approvedHttpCeiling": 130,
+  "approvedPostCeiling": 4,
+  "source": "EXTERNAL",
+  "executedCampaigns": [
+    {
+      "campaignId": "d19050c7-b8e4-4397-8afe-9b40b5cd0c9d",
+      "maxHttpCalls": 3,
+      "caseCount": 1
+    },
+    {
+      "campaignId": "f6740d43-b428-4489-a533-40889e985d99",
+      "maxHttpCalls": 2,
+      "caseCount": 1
+    },
+    {
+      "campaignId": "3b6621c9-bc12-4cb3-9720-d2fd5ee1da21",
+      "maxHttpCalls": 12,
+      "caseCount": 6
+    },
+    {
+      "campaignId": "d5497303-0797-4d53-9d49-f2ae1bb7ab82",
+      "maxHttpCalls": 2,
+      "caseCount": 1
+    },
+    {
+      "campaignId": "27af3e04-26c5-4de1-9025-946ed53d57bc",
+      "maxHttpCalls": 7,
+      "caseCount": 1
+    },
+    {
+      "campaignId": "ae6ce636-adec-430b-bdac-53deb0057b5d",
+      "maxHttpCalls": 7,
+      "caseCount": 1
+    },
+    {
+      "campaignId": "a769d7b9-551d-4574-8bf2-e8262d996b52",
+      "maxHttpCalls": 21,
+      "caseCount": 3
+    }
+  ],
+  "runs": [
+    {
+      "runId": "af283831-9960-4b48-a7ca-612720d4e20f",
+      "campaignId": "d19050c7-b8e4-4397-8afe-9b40b5cd0c9d",
+      "caseId": "7547766f-7a32-4412-8fee-79ec0403050b",
+      "family": "B01",
+      "state": "STOPPED",
+      "reason": "RETRY_AFTER_OR_OVERLOAD",
+      "actualHttp": 1,
+      "actualPost": 0,
+      "plannedUpperBound": 3
+    },
+    {
+      "runId": "9a1de23e-044b-49f9-aba4-6dc2e60323b9",
+      "campaignId": "f6740d43-b428-4489-a533-40889e985d99",
+      "caseId": "7a78af4d-4c0f-4ecc-a574-c87273bbd186",
+      "family": "R02",
+      "state": "COMPLETED",
+      "reason": null,
+      "actualHttp": 1,
+      "actualPost": 0,
+      "plannedUpperBound": 2
+    },
+    {
+      "runId": "36a7e27c-3067-4620-a8db-e0690228ff33",
+      "campaignId": "3b6621c9-bc12-4cb3-9720-d2fd5ee1da21",
+      "caseId": "7c2bc09c-1a4c-4397-b639-1b357f8f0c76",
+      "family": "R01",
+      "state": "STOPPED",
+      "reason": "OBSERVED_ERROR",
+      "actualHttp": 1,
+      "actualPost": 0,
+      "plannedUpperBound": 2
+    },
+    {
+      "runId": "fa596d81-c243-483c-bf12-8df0a40f2ea1",
+      "campaignId": "d5497303-0797-4d53-9d49-f2ae1bb7ab82",
+      "caseId": "d90b7325-5583-4cbe-b504-a3aaad4111ba",
+      "family": "R04",
+      "state": "COMPLETED",
+      "reason": null,
+      "actualHttp": 1,
+      "actualPost": 0,
+      "plannedUpperBound": 2
+    },
+    {
+      "runId": "00fcd3c4-ce33-448b-a1c3-c5b8617139a3",
+      "campaignId": "27af3e04-26c5-4de1-9025-946ed53d57bc",
+      "caseId": "63a06e8a-cc76-42bb-bc8e-ca0a17fe53b8",
+      "family": "P01",
+      "state": "STOPPED",
+      "reason": "RETRY_AFTER_OR_OVERLOAD",
+      "actualHttp": 1,
+      "actualPost": 0,
+      "plannedUpperBound": 7
+    },
+    {
+      "runId": "4ff4f593-c904-4916-a2da-937217b90c98",
+      "campaignId": "ae6ce636-adec-430b-bdac-53deb0057b5d",
+      "caseId": "d1bdfa17-496e-4f56-b854-5af6a6e4c373",
+      "family": "P02",
+      "state": "STOPPED",
+      "reason": "OBSERVED_ERROR",
+      "actualHttp": 2,
+      "actualPost": 1,
+      "plannedUpperBound": 7
+    },
+    {
+      "runId": "a42e5d55-0aa3-4a75-9f70-418a803de39d",
+      "campaignId": "a769d7b9-551d-4574-8bf2-e8262d996b52",
+      "caseId": "1ea13ae5-1b6a-4e9f-ab06-3512be66f3da",
+      "family": "P04",
+      "state": "STOPPED",
+      "reason": "OBSERVED_ERROR",
+      "actualHttp": 2,
+      "actualPost": 1,
+      "plannedUpperBound": 7
+    }
+  ],
+  "omissions": [
+    {
+      "family": "T01",
+      "plannedHttp": 4,
+      "reason": "B01 not normally completed; terminal checkId not verified"
+    },
+    {
+      "family": "C01",
+      "plannedHttp": 27,
+      "reason": "B01/T01 normal readiness not established"
+    },
+    {
+      "family": "C02",
+      "plannedHttp": 27,
+      "reason": "Normal readiness and terminal target not yet verified"
+    },
+    {
+      "family": "R01",
+      "plannedHttp": 10,
+      "reason": "First SHORT procedure stopped; subsequent comparison requires prior COMPLETED"
+    },
+    {
+      "family": "R03",
+      "plannedHttp": 18,
+      "reason": "No observed 500 followed by failed first retry; extension premise not established"
+    },
+    {
+      "family": "P04",
+      "plannedHttp": 14,
+      "reason": "First 2s polling procedure stopped on detail HTTP500; remaining comparison conditions not advanced"
+    }
+  ],
+  "actualHttp": 9,
+  "actualPost": 2,
+  "privacy": "Keys, employee identifiers, check identifiers, names, birth dates and response bodies excluded from raw exports",
+  "limitation": "Unused budgets are not observations; no exact business completion or retry recovery observed"
+}

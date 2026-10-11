@@ -30,6 +30,16 @@ test('a success without retry completes the procedure with unused HTTP capacity'
   const p = caseProgress({caseId:'one',conditions:c},[{caseId:'one',recordingStatus:'COMPLETED',result:{attempts:[{}]}}])
   assert.equal(p.observed,1);assert.equal(p.remaining,1);assert.equal(p.procedureDone,true)
 })
+test('C03 reserves exactly nine independent GETs at fixed levels, with no retries or POST', () => {
+  const cs=followupCases('C03')
+  assert.deepEqual(cs.map(c=>c.concurrency),[1,2,3])
+  assert.equal(cs.reduce((n,c)=>n+c.goal,0),9)
+  for(const c of cs) {
+    const r=nextRequest(c,c.goal,{})
+    assert.equal(r.repeats,3);assert.equal(r.type,'GET_FIXED');assert.equal(r.endpoint,'LIST')
+    assert.equal(r.postAcknowledged,false);assert.equal(r.protocol.block,1)
+  }
+})
 test('recovery uses eligible initial operations, never ordinary error counts', () => {
   assert.equal(retryEvidence({attempts:[{httpCode:500}]}).recoveryPercent,null)
   const r = retryEvidence({logicalOperations:[{eligibleInitialFailure:true,retriesStarted:1,recovered:true},

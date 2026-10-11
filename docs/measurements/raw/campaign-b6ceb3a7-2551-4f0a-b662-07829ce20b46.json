@@ -1,0 +1,131 @@
+{
+  "plan": {
+    "campaignId": "b6ceb3a7-2551-4f0a-b662-07829ce20b46",
+    "maxHttpCalls": 2,
+    "goalMeaning": "Observed HTTP attempts, including GET, POST, polling and failures; never count unstarted calls",
+    "cases": [
+      {
+        "caseId": "a384c101-38a5-441e-b118-b93f0d42bab0",
+        "conditions": {
+          "type": "GET_RETRY",
+          "endpoint": "LIST",
+          "unit": "REQUESTS",
+          "goal": 2,
+          "concurrency": 1,
+          "connectTimeoutMs": 5000,
+          "requestTimeoutMs": 30000,
+          "intervalMs": 2000,
+          "pollIntervalMs": 5000,
+          "maxPolls": 6,
+          "protocol": {
+            "family": "R02",
+            "variant": "DEFAULT",
+            "block": 0,
+            "order": 0
+          }
+        }
+      }
+    ],
+    "scope": "metadata only; targets and keys are not stored"
+  },
+  "runs": [
+    {
+      "result": {
+        "attempts": [
+          {
+            "attemptId": "962fa318-c434-4dc8-b4c4-22e883b213cc",
+            "sequence": 1,
+            "logicalOperationId": "4bfb484c-0b9d-4515-91d7-5f11b9c9cda1/operation-1",
+            "endpoint": "LIST",
+            "concurrency": 1,
+            "retryIndex": 0,
+            "groupWidth": 1,
+            "outcome": "HTTP_RESPONSE",
+            "httpCode": 500,
+            "elapsedMs": 1255.90744,
+            "queueWaitMs": 0.13603,
+            "startedAt": "2026-10-11T16:44:07.113623477Z",
+            "endedAt": "2026-10-11T16:44:08.369535857Z",
+            "requestTimeoutMs": 30000,
+            "httpVersion": "HTTP_1_1",
+            "responseBytes": 119,
+            "retryAfter": {
+              "header": null,
+              "headerMs": null,
+              "bodyMs": null,
+              "invalidHeader": false,
+              "conflict": false
+            },
+            "issues": []
+          }
+        ],
+        "phases": [],
+        "workflows": [],
+        "postComparison": {},
+        "run": {
+          "runId": "4bfb484c-0b9d-4515-91d7-5f11b9c9cda1",
+          "comparisonGroupId": "4bfb484c-0b9d-4515-91d7-5f11b9c9cda1",
+          "type": "GET_RETRY",
+          "endpoint": "LIST",
+          "targetAlias": "target-1",
+          "source": "EXTERNAL",
+          "startedAt": "2026-10-11T16:44:07.109401274Z",
+          "updatedAt": "2026-10-11T16:44:08.389510412Z",
+          "reason": "OBSERVED_ERROR",
+          "state": "STOPPED",
+          "plannedUpperBound": 2,
+          "started": 1,
+          "notStarted": 1,
+          "finished": 1,
+          "conditions": {
+            "callBudget": 2,
+            "requestTimeoutMs": 30000,
+            "maxPolls": 6,
+            "pollIntervalMs": 5000,
+            "repeats": 1,
+            "connectTimeoutMs": 5000,
+            "durationMs": 120000,
+            "intervalMs": 2000,
+            "maxConcurrency": 1
+          },
+          "protocol": {
+            "family": "R02",
+            "variant": "DEFAULT",
+            "block": 0,
+            "order": 0
+          },
+          "maxClientCallsInFlight": 1,
+          "javaVersion": "21.0.12.1",
+          "client": "JDK HttpClient HTTP_1_1",
+          "revision": "7d6401751cc839036f4c945d03166f7082bb6a23",
+          "specVersion": "1.1.1",
+          "specSha256": "30e38d5a486238827407063b4ca549e67b5f046c8ad40e560d45a1729eb86d24",
+          "quantileMethod": "TYPE_7",
+          "campaignId": "b6ceb3a7-2551-4f0a-b662-07829ce20b46",
+          "caseId": "a384c101-38a5-441e-b118-b93f0d42bab0",
+          "recordingEnabled": true,
+          "partialProtocol": false,
+          "connectionMode": "reusedClient (physical connection reuse not instrumented)",
+          "retryMode": "Explicit bounded GET experiment / transport recovery not instrumented"
+        },
+        "logicalOperations": [
+          {
+            "logicalOperationId": "4bfb484c-0b9d-4515-91d7-5f11b9c9cda1/operation-1",
+            "startedAt": "2026-10-11T16:44:07.113455497Z",
+            "eligibleInitialFailure": false,
+            "retriesStarted": 0,
+            "recovered": false,
+            "waits": [],
+            "result": "INITIAL_FAILED",
+            "endedAt": "2026-10-11T16:44:08.381176936Z"
+          }
+        ]
+      },
+      "runId": "4bfb484c-0b9d-4515-91d7-5f11b9c9cda1",
+      "caseId": "a384c101-38a5-441e-b118-b93f0d42bab0",
+      "campaignId": "b6ceb3a7-2551-4f0a-b662-07829ce20b46",
+      "recordingStatus": "STOPPED",
+      "stale": false
+    }
+  ]
+}
