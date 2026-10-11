@@ -1,0 +1,113 @@
+{
+  "campaignId": "43ed4d81-dd19-472c-8d9e-3a914e535783",
+  "sha256": "19157050bc6084636b211bc888c115736aac66984175b7b9da6e632289c96df7",
+  "quantileMethod": "TYPE_7",
+  "actualHttp": 1,
+  "actualPost": 0,
+  "priorSuiteHttp": 10,
+  "totalSuiteHttp": 11,
+  "remainingSuiteHttp": 119,
+  "levels": [
+    {
+      "concurrency": 1,
+      "n": 1,
+      "runId": "8c014f8a-8e13-4d71-98d3-9ce96cbe978f",
+      "revision": "52916545ea4c191d1b4dfb507f71a23099fae83c",
+      "state": "STOPPED",
+      "reason": "RETRY_AFTER_OR_OVERLOAD",
+      "counts": {
+        "503": 1
+      },
+      "normalN": 0,
+      "errorN": 1,
+      "errorPercent": 100,
+      "normalLatency": {
+        "n": 0,
+        "mean": null,
+        "p50": null,
+        "p95": null,
+        "p99": null,
+        "max": null,
+        "meanMedianGap": null,
+        "outliers": []
+      },
+      "errorLatency": {
+        "n": 1,
+        "mean": 1385.699654,
+        "p50": 1385.699654,
+        "p95": 1385.699654,
+        "p99": 1385.699654,
+        "max": 1385.699654,
+        "meanMedianGap": 0,
+        "p95Ratio": 1,
+        "maxRatio": 1,
+        "outliers": [],
+        "tailRanks": [
+          1,
+          1
+        ],
+        "tailValues": [
+          1385.699654,
+          1385.699654
+        ]
+      },
+      "maxClientCallsInFlight": 1,
+      "groupWidths": [
+        1
+      ],
+      "startedAt": "2026-10-11T17:45:33.476286991Z",
+      "endedAt": "2026-10-11T17:45:34.924015238Z"
+    },
+    {
+      "concurrency": 2,
+      "n": 0,
+      "state": "UNSTARTED",
+      "normalLatency": {
+        "n": 0,
+        "mean": null,
+        "p50": null,
+        "p95": null,
+        "p99": null,
+        "max": null,
+        "meanMedianGap": null,
+        "outliers": []
+      },
+      "errorLatency": {
+        "n": 0,
+        "mean": null,
+        "p50": null,
+        "p95": null,
+        "p99": null,
+        "max": null,
+        "meanMedianGap": null,
+        "outliers": []
+      }
+    },
+    {
+      "concurrency": 3,
+      "n": 0,
+      "state": "UNSTARTED",
+      "normalLatency": {
+        "n": 0,
+        "mean": null,
+        "p50": null,
+        "p95": null,
+        "p99": null,
+        "max": null,
+        "meanMedianGap": null,
+        "outliers": []
+      },
+      "errorLatency": {
+        "n": 0,
+        "mean": null,
+        "p50": null,
+        "p95": null,
+        "p99": null,
+        "max": null,
+        "meanMedianGap": null,
+        "outliers": []
+      }
+    }
+  ],
+  "limitations": "Small ordered pilot; normal and error latency separated; no retry recovery estimate; interrupted latency is censored; time and load confound concurrency comparison; not a safe production upper bound"
+}

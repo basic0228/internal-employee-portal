@@ -1,0 +1,87 @@
+{
+  "run": {
+    "runId": "8c014f8a-8e13-4d71-98d3-9ce96cbe978f",
+    "comparisonGroupId": "8c014f8a-8e13-4d71-98d3-9ce96cbe978f",
+    "type": "GET_FIXED",
+    "endpoint": "LIST",
+    "targetAlias": "target-1",
+    "source": "EXTERNAL",
+    "startedAt": "2026-10-11T17:45:33.476286991Z",
+    "updatedAt": "2026-10-11T17:45:34.924015238Z",
+    "reason": "RETRY_AFTER_OR_OVERLOAD",
+    "state": "STOPPED",
+    "plannedUpperBound": 3,
+    "started": 1,
+    "notStarted": 2,
+    "finished": 1,
+    "conditions": {
+      "maxConcurrency": 1,
+      "intervalMs": 2000,
+      "durationMs": 120000,
+      "connectTimeoutMs": 5000,
+      "repeats": 3,
+      "pollIntervalMs": 5000,
+      "maxPolls": 6,
+      "requestTimeoutMs": 30000,
+      "callBudget": 3
+    },
+    "protocol": {
+      "family": "C03",
+      "variant": "DEFAULT",
+      "block": 1,
+      "order": 1
+    },
+    "comparisonErrorPolicy": "Valid HTTP 500 recorded without retry; overload, wait hint, transport, contract and storage errors stop",
+    "maxClientCallsInFlight": 1,
+    "javaVersion": "21.0.12.1",
+    "client": "JDK HttpClient HTTP_1_1",
+    "revision": "52916545ea4c191d1b4dfb507f71a23099fae83c",
+    "specVersion": "1.1.1",
+    "specSha256": "30e38d5a486238827407063b4ca549e67b5f046c8ad40e560d45a1729eb86d24",
+    "quantileMethod": "TYPE_7",
+    "campaignId": "43ed4d81-dd19-472c-8d9e-3a914e535783",
+    "caseId": "225dbcf4-da15-4bfc-abe9-a08d0edfb2a5",
+    "recordingEnabled": true,
+    "partialProtocol": false,
+    "connectionMode": "reusedClient (physical connection reuse not instrumented)",
+    "retryMode": "Application OFF / transparent transport recovery not instrumented"
+  },
+  "postComparison": {},
+  "workflows": [],
+  "phases": [
+    {
+      "elapsedMs": 1402.142764,
+      "concurrency": 1,
+      "n": 1
+    }
+  ],
+  "attempts": [
+    {
+      "attemptId": "d8f0fa13-a1b7-4de8-bca9-7f94cf200b18",
+      "sequence": 1,
+      "logicalOperationId": "8c014f8a-8e13-4d71-98d3-9ce96cbe978f/1/1",
+      "endpoint": "LIST",
+      "concurrency": 1,
+      "retryIndex": 0,
+      "groupWidth": 1,
+      "outcome": "HTTP_RESPONSE",
+      "httpCode": 503,
+      "elapsedMs": 1385.699654,
+      "queueWaitMs": 1.042495,
+      "startedAt": "2026-10-11T17:45:33.516985236Z",
+      "endedAt": "2026-10-11T17:45:34.902683300Z",
+      "requestTimeoutMs": 30000,
+      "httpVersion": "HTTP_1_1",
+      "responseBytes": 152,
+      "retryAfter": {
+        "header": null,
+        "headerMs": null,
+        "bodyMs": 30000,
+        "invalidHeader": false,
+        "conflict": false
+      },
+      "issues": []
+    }
+  ],
+  "logicalOperations": []
+}
