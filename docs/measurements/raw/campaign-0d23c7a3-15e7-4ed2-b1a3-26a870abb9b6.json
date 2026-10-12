@@ -1,0 +1,153 @@
+{
+  "plan": {
+    "cases": [
+      {
+        "conditions": {
+          "type": "GET_FIXED",
+          "endpoint": "LIST",
+          "unit": "REQUESTS",
+          "goal": 3,
+          "concurrency": 1,
+          "connectTimeoutMs": 5000,
+          "requestTimeoutMs": 30000,
+          "intervalMs": 2000,
+          "pollIntervalMs": 5000,
+          "maxPolls": 6,
+          "protocol": {
+            "family": "B01",
+            "variant": "DEFAULT",
+            "block": 0,
+            "order": 0
+          }
+        },
+        "caseId": "d66824a3-ef4d-4b57-8e3e-fa6163ac8d57"
+      }
+    ],
+    "goalMeaning": "Observed HTTP attempts, including GET, POST, polling and failures; never count unstarted calls",
+    "maxHttpCalls": 3,
+    "campaignId": "0d23c7a3-15e7-4ed2-b1a3-26a870abb9b6",
+    "scope": "metadata only; targets and keys are not stored"
+  },
+  "runs": [
+    {
+      "result": {
+        "postComparison": {},
+        "workflows": [],
+        "phases": [
+          {
+            "elapsedMs": 34562.301756,
+            "concurrency": 1,
+            "n": 2
+          }
+        ],
+        "attempts": [
+          {
+            "attemptId": "3bf57581-ccb1-4a77-9506-23ee91c0928f",
+            "sequence": 1,
+            "logicalOperationId": "18106eed-e05f-46f2-95cd-c3fb9277391a/1/1",
+            "endpoint": "LIST",
+            "concurrency": 1,
+            "retryIndex": 0,
+            "groupWidth": 1,
+            "outcome": "HTTP_RESPONSE",
+            "httpCode": 200,
+            "elapsedMs": 2501.735647,
+            "queueWaitMs": 0.156877,
+            "startedAt": "2026-10-12T21:42:12.541121778Z",
+            "endedAt": "2026-10-12T21:42:15.042860077Z",
+            "requestTimeoutMs": 30000,
+            "httpVersion": "HTTP_1_1",
+            "responseBytes": 466,
+            "retryAfter": {
+              "header": null,
+              "headerMs": null,
+              "bodyMs": null,
+              "invalidHeader": false,
+              "conflict": false
+            },
+            "issues": []
+          },
+          {
+            "attemptId": "1a0df022-f11a-4968-9a24-3ff83a27e062",
+            "sequence": 2,
+            "logicalOperationId": "18106eed-e05f-46f2-95cd-c3fb9277391a/1/2",
+            "endpoint": "LIST",
+            "concurrency": 1,
+            "retryIndex": 0,
+            "groupWidth": 1,
+            "outcome": "REQUEST_TIMEOUT",
+            "httpCode": null,
+            "elapsedMs": 30001.409316,
+            "queueWaitMs": 0.160505,
+            "startedAt": "2026-10-12T21:42:17.072934484Z",
+            "endedAt": "2026-10-12T21:42:47.074346348Z",
+            "requestTimeoutMs": 30000,
+            "httpVersion": null,
+            "responseBytes": null,
+            "retryAfter": {
+              "header": null,
+              "headerMs": null,
+              "bodyMs": null,
+              "invalidHeader": false,
+              "conflict": false
+            },
+            "issues": []
+          }
+        ],
+        "logicalOperations": [],
+        "run": {
+          "runId": "18106eed-e05f-46f2-95cd-c3fb9277391a",
+          "comparisonGroupId": "18106eed-e05f-46f2-95cd-c3fb9277391a",
+          "type": "GET_FIXED",
+          "endpoint": "LIST",
+          "targetAlias": "target-1",
+          "source": "EXTERNAL",
+          "startedAt": "2026-10-12T21:42:12.521126425Z",
+          "updatedAt": "2026-10-12T21:42:47.119581853Z",
+          "reason": "OBSERVED_ERROR",
+          "state": "STOPPED",
+          "plannedUpperBound": 3,
+          "started": 2,
+          "notStarted": 1,
+          "finished": 2,
+          "conditions": {
+            "durationMs": 120000,
+            "connectTimeoutMs": 5000,
+            "repeats": 3,
+            "pollIntervalMs": 5000,
+            "maxPolls": 6,
+            "requestTimeoutMs": 30000,
+            "callBudget": 3,
+            "maxConcurrency": 1,
+            "intervalMs": 2000
+          },
+          "protocol": {
+            "family": "B01",
+            "variant": "DEFAULT",
+            "block": 0,
+            "order": 0
+          },
+          "comparisonErrorPolicy": "Default campaign stop policy / explicit retry exceptions only",
+          "maxClientCallsInFlight": 1,
+          "javaVersion": "21.0.12.1",
+          "client": "JDK HttpClient HTTP_1_1",
+          "revision": "b91921fceab5857b5e640dc1e419afebf35d5a69",
+          "specVersion": "1.1.1",
+          "specSha256": "30e38d5a486238827407063b4ca549e67b5f046c8ad40e560d45a1729eb86d24",
+          "quantileMethod": "TYPE_7",
+          "campaignId": "0d23c7a3-15e7-4ed2-b1a3-26a870abb9b6",
+          "caseId": "d66824a3-ef4d-4b57-8e3e-fa6163ac8d57",
+          "recordingEnabled": true,
+          "partialProtocol": false,
+          "connectionMode": "reusedClient (physical connection reuse not instrumented)",
+          "retryMode": "Application OFF / transparent transport recovery not instrumented"
+        }
+      },
+      "runId": "18106eed-e05f-46f2-95cd-c3fb9277391a",
+      "caseId": "d66824a3-ef4d-4b57-8e3e-fa6163ac8d57",
+      "campaignId": "0d23c7a3-15e7-4ed2-b1a3-26a870abb9b6",
+      "recordingStatus": "STOPPED",
+      "stale": false
+    }
+  ]
+}

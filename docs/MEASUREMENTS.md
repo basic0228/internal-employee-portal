@@ -182,3 +182,25 @@ timeout8·취소2/실제65시도는2절의 클라이언트 관찰 결과로 별�
 근거파일: [고유 실행·원본 인덱스](measurements/integrated/INDEX.md), [통합 관측·SHA256](measurements/integrated/evidence.json), [초기 조건별 상세 분석](API_DECISION_EVIDENCE_INITIAL.md), [수학·통계·공학 모형](API_DECISION_EVIDENCE.md), [업무 관찰 증빙](measurements/business-validation.json), [시점별 기록](MEASUREMENTS_HISTORY.md), [통합 Excel](measurements/submission-evidence.xlsx).
 
 재현: `node scripts/integrate-submission-evidence.mjs`. 원본 run/attempt 중복·조건·SHA256을 대조했고 기존39run/65시도·Excel은 변경하지 않았다. Excel 원본값·수식 검증과 대체 미리보기는 확인했으나 native 렌더러 Vulkan 오류로 실제 Excel 화면 검증은 미완료다. 로컬 H2·모의 HTTP 검증을 실제 외부 표본으로 추가하지 않는다. 남은 운영 검증·제출 계정·작업 시간은[제출 체크리스트](SUBMISSION.md)에 있다.
+
+## 추가 관측 — 2026-10-13 배포 브라우저 재실행
+
+이 절은 기존39run/65시도 및 통합 Excel과 **별도 집단**이다. 사용자가 핵심 최대44 HTTP·POST3건 계획 확인 후 직접 실행을 요청했다. 첫 B01에서 오류 중단 조건이 발생해 실제 호출은 **GET2건·POST0건**, 미사용 전체 예산은42건이다. 뒤 케이스는 미실행이며 성공으로 처리하지 않는다.
+
+- 계획ID: `0d23c7a3-15e7-4ed2-b1a3-26a870abb9b6`
+- 실행ID: `18106eed-e05f-46f2-95cd-c3fb9277391a`
+- 대상: 과제 시드 EMP-001의 이력 LIST GET. DETAIL 지연 표본이 아니다.
+- 조건: 연결5초·전체 요청30초·동시성1·응답 후2초·최대3시도·실행120초·자동 retry0회.
+- 실행 서버 시각: `2026-10-12T21:42:12.521126425Z`부터 `2026-10-12T21:42:47.119581853Z`까지. 한국 시각은 **2026-10-13 06:42:12~06:42:47**이다.
+- 배포 revision: `b91921fceab5857b5e640dc1e419afebf35d5a69`; Swagger1.1.1의 SHA256은 기존 명세와 같다.
+
+| 시도 | 관측 | 본문 수신/중단 경과(ms) | 표본 n |
+|---:|---|---:|---:|
+| 1 | HTTP200·완료·검사 issue0 | 2501.735647 | 정상 완료1 |
+| 2 | REQUEST_TIMEOUT·HTTP 코드 미관측 | 30001.409316 | 전송 중단1 |
+
+완료 HTTP 분포는200=1/1(100%), 전체 시작 시도 기준으로는200=1/2(50%)·코드 미관측1/2(50%)다. 전송 결과는HTTP_RESPONSE1/2·REQUEST_TIMEOUT1/2다. 완료 LIST의 평균·p50·p95·p99·최대는 모두 **2501.735647ms(n=1, Type7)**이지만, 한 표본의 백분위수는 tail 분포를 설명하지 못한다. timeout 경과30001.409316ms(n=1)를 완료 응답 지연 통계에 넣거나 실제 서버 응답시간으로 해석하지 않는다. 연결 단계 시간은 계측하지 않아 timeout의 내부 단계·제공자 원인·로컬 네트워크 원인은 확정하지 못했다.
+
+최종 상태는`STOPPED / OBSERVED_ERROR`, started2·finished2·notStarted1이다. 서버 자동 저장 활성과 저장된 원본의`recordingStatus=STOPPED`를 확인하고 브라우저의 서버 저장 JSON을 파일로 보관했다. retry·중복POST·pending 완료·동시성2/3의 추가 표본은각각n=0이다. 이2건으로 기존 설정이나 설계 결정을 자동 변경하지 않는다. 다음 실험은 실패 후속 경로 및 새 중단 조건을 검토한 뒤 재개한다.
+
+추적: [재실행 계획](LAB_RETEST_PLAN_20261013.md), [서버 저장 원본 JSON](measurements/raw/campaign-0d23c7a3-15e7-4ed2-b1a3-26a870abb9b6.json). 기존 통합 Excel에는 이 실행을 아직 합산하지 않았다.
