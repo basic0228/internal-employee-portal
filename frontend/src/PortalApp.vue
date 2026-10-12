@@ -138,7 +138,20 @@ async function showCheckDetail(requestId) {
     const { data } = await postWithCsrf(checkBase() + '/history/' + encodeURIComponent(requestId) + '/refresh', { automatic: false })
     if (generation === checkGeneration) {
       checkDetail.value = data.detail || null;checkViews.value = data.views || []
-      if (!data.detail) historyError.value = '상세 결과를 확인하지 못했거나 호출 간격 제한 중입니다. 이력 상태를 확인하세요.'
+      if (!data.detail) {
+        const row = data.history
+        const observed = row?.lastHttpCode >= 400 ? `최근 확인: HTTP ${row.lastHttpCode}. `
+          : row?.lastOutcome === 'REQUEST_TIMEOUT' ? '최근 확인: 요청 시간 초과. ' : ''
+        // An unclaimed refresh returns metadata alone. Respect the server lease/wait rather than retrying.
+        if (!data.views && Date.parse(row?.refreshingUntil) > Date.now()) {
+          historyError.value = '다른 결과 확인이 진행 중입니다. 완료 후 상세 결과 보기를 다시 눌러 주세요.'
+        } else if (!data.views && Date.parse(row?.nextPollAt) > Date.now()) {
+          const retryAt = new Date(row.nextPollAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })
+          historyError.value = `호출 대기 제한 중입니다. ${retryAt}(한국 시각) 이후 상세 결과 보기를 다시 눌러 주세요. 상세 조회는 자동 재시도하지 않습니다.`
+        } else {
+          historyError.value = `상세 결과를 받지 못했습니다. ${observed}외부 응답 실패·응답 형식·대기 제한을 확인하세요. 저장된 이력 상태는 상세 결과를 대신하지 않습니다.`
+        }
+      }
       await loadCheckHistory()
     }
   } catch (failure) { if (generation === checkGeneration) historyError.value = errorMessage(failure) }

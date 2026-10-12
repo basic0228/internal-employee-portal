@@ -24,6 +24,11 @@
 @media (max-width: 700px) { .lab-grid, .lab-metrics { grid-template-columns: 1fr; } }
 .portal-details { display: grid; grid-template-columns: 140px 1fr; gap: 12px; }
 .portal-details dd { margin: 0; }
+.portal-check-detail { padding: 16px; margin: 12px 0; border: 1px solid #dbe4ee; border-radius: 8px; background: #f8fafc; scroll-margin-top: 12px; }
+.portal-check-detail h3 { margin-top: 0; }
+.portal-check-reference, .portal-check-history td { overflow-wrap: anywhere; }
+.portal-check-history .p-datatable-table { width: 100%; table-layout: fixed; }
+.portal-check-history th:first-child, .portal-check-history td:first-child { width: 120px; }
 .portal-confirm { background: #fff5f4; border: 1px solid #facbc7; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
 .portal-confirm .portal-actions { margin-top: 12px; }
 @media (max-width: 700px) { .portal-header, .portal-section-title { align-items: flex-start; flex-direction: column; } .portal-shell { padding: 16px 12px; } }
