@@ -2,6 +2,8 @@
 
 기준: 2026-10-12 KST. 과제 제출물2의 실측 결과와 적용 초기값·근거 부족 항목을 정리했다. 고유 EXTERNAL 종료 실행 **39개·실제 요청 시도65건**을 보존했다. 완료 HTTP55건, 요청 타임아웃8건, 취소2건이다. 기록 재고의 합계이며 서로 다른 대상·리비전·시각·프로토콜을 하나의 성능 표본으로 합치지 않는다. 화면 관측만 남은 실행1개는 원본 기반 집계에서 제외했다. 이후 업무 화면 확인5외부호출은11절의 별도 기능 검증이며 이 집계에 포함하지 않는다.
 
+**이번 제출의 최종 선택값(현재 코드·기본 정책): 연결5초 / 전체 요청30초 / GET 추가 재시도0회 / POST 재시도0회 / 폴링 응답 후5초·예약부터120초·최대24회 / 업무 HTTP 동시성 인스턴스당1.** [10절의 선택·근거·설정표](#10-최종-선택값과-코드-반영)에 정리했다. 선택과 코드 반영은 완료했으며, 통계적으로 최적임을 입증하는 추가 검증은 미완료다.
+
 ## 1. 측정 조건과 원본
 
 관리자 브라우저/스크립트 → Railway 서버 → 공통 BackgroundCheckClient → 외부 API 경로다. 외부 호출은 서버에서 수행하며 키·인적사항·응답 본문을 분석 원본에 저장하지 않는다. 서버 monotonic clock의 elapsedMs는 외부 요청 경과시간이며 PC↔포털 왕복, queueWaitMs, 업무 처리시간과 다르다. Java21/JDK HttpClient HTTP/1.1, Swagger1.1.1/hash `30e38d5a486238827407063b4ca549e67b5f046c8ad40e560d45a1729eb86d24`. 물리적 연결 재사용·전송계층 내부 복구·연결 단계 시간은 미계측이다.
@@ -114,9 +116,46 @@ Lab 초기·후속 POST 업무8개 중 처음부터clear4개·pending4개였다.
 
 완료 응답에서 수행한 검사 issue는0/55지만 모든 명세·분기를 검증했다는 뜻은 아니다. 타임아웃·취소10/65는 완료 계약 관찰 불가다.429의 실제 관측은 없다. 오류 본문의 선택 필드를 필수로 만들지 않고 존재할 때만 검사한다.500 내부 원인은 본문 미보존 메타데이터만으로 규명하지 못했다. 독립적인 명세 위반을 확정할 근거는 없다.
 
-## 10. 설정 후보와 최종 선택
+## 10. 최종 선택값과 코드 반영
 
-[API_DECISION_EVIDENCE.md](API_DECISION_EVIDENCE.md)에 측정 ID·n·통계·모형·대안·재검토 상황을 연결했다. 업무 구현 요청으로 timeout·GET 재시도·관리자 화면 폴링을 코드에 연결했고 사용자가 운영 검증 때 기본 정책 유지를 확인했다. **실측 최적값은 TODO**다. 설정명은 실제 JDK Client의 connect-timeout-ms/request-timeout-ms이며 별도 socket read-timeout은 구현되지 않았다. 적용 초기값과 한계는 다음 절과[설계 판단](DECISIONS.md)에 구분한다.
+업무 구현 요청에 따라 아래 값을 선택·구현했고, 사용자는 운영 검증 때 “기본 정책 유지”를 확인했다. **이번 제출에서 사용하는 값은 아래와 같이 정했다.** 근거 부족은 선택값이 없다는 뜻이 아니라 최적성·장기 효과를 검증하지 못했다는 뜻이다. [설정 근거·대안](API_DECISION_EVIDENCE.md), [업무 정책 상세](BACKGROUND_CHECK_POLICY.md), [설계 판단](DECISIONS.md)을 연결한다. 이번 문서 정리에서는 코드·Railway 변수·실측 원본을 변경하지 않았다.
+
+### 선택값과 실측 근거
+
+| 항목 | 최종 선택·적용값 | 실제 근거와 표본 수 | 선택 이유 / 검증 한계 |
+|---|---|---|---|
+| HTTP 연결 timeout | **5,000ms** | 연결 단계만 분리한 실측 n=0. 기존 실험의 연결 제한5초 | 기존 실험 조건을 유지하며 연결 대기를 제한한다. 응답 p99에서 도출한 값은 아니며 최적 연결 제한 미검증 |
+| HTTP 전체 요청 timeout | **30,000ms** | E09 LIST 정상 n=2 최대26,884.973ms, E11 LIST 정상 n=3 최대27,108.368ms. DETAIL 정상 n=2 최대333.818ms, timeout n=2 별도 | 10초는 관측된 느린 정상 LIST를 놓친다. 30초로 약27초 정상을 수용하고 60초 후보보다 실패 시 대기 상한을 줄인다. LIST/DETAIL 공통 적용이며 DETAIL 최적값·30초 이후 성공 여부 미검증 |
+| GET 추가 재시도 | **0회(논리 GET당 초기 시도1회)** | R02 `c4e7adbc-a862-4e9a-911f-fd4821d87ec7`: 실제 추가retry n=1, 회복0/1(503→30초 안내 대기→500) | 회복 개선 근거 없이 호출을 증폭하지 않는다. 회복0/1을 장기 성공률0%로 단정하지 않음 |
+| POST 재시도 | **항상0회** | E11 반복 비교 n=2쌍 모두 별도ID. LIST 대조 성공1/2쌍. 실제 POST timeout 복구 n=0 | 응답 유실 시 중복 생성을 피한다. UNKNOWN 보관·수동 대조/연결을 사용하며 외부 exactly-once는 보장하지 않음 |
+| 재시도 대상·Backoff | **현재 미사용**. 설정의 Fixed **1,000ms**는 비활성 지원값 | Fixed/Exponential 실제 비교 n=0. 현재 max-retries=0 | 현재 자동 재시도는 어떤 상태코드에도 수행하지 않는다. 추후 활성화 지원은 GET500/503만 추가 최대1회·Fixed1초이며 별도 검토가 필요 |
+| Retry-After·대기 안내 | **유효 헤더 우선, 없으면 본문retryAfter. 안내보다 일찍 후속 조회하지 않음** | 같은 R02: 본문30초 안내1건, 실제 대기30,000.376680ms·회복0/1. 표준 헤더 분기 실제 검증 n=0 | 대기 안내를 존중하되 회복을 보장하지 않는다. 현재 retry0이므로 자동 재시도 대기는 발생하지 않으며 안내는 이력의 다음 조회 가능 시각에도 반영 |
+| 폴링 주기 | **응답 후5,000ms** | Lab 최종 발견 n=0, 업무 수동 최종 발견 n=1·자동 최종 발견 n=0. 정확한 서버 업무시간 n=0 | 완료시간 분포로 최적 주기를 산출하지 못해 호출 빈도를 제한하는 값으로 선택. 업무의88.872002초를 순수 완료시간에 대입하지 않음 |
+| 자동 폴링 최대 시간 | **예약부터120,000ms** | 정확한 완료시간 분포 n=0. 모의 마감·중단 검증은 외부 표본과 별도 | 무기한 관찰을 막는 시간 예산. POST 시간도 포함하고, 자동 GET은 남은 예산과 요청30초 중 작은 제한을 사용. 120초 내 업무 완료 보장은 아님 |
+| 자동 폴링 최대 횟수 | **24회** | 외부 최적 횟수 비교 n=0. `120초/5초=24`는 설정 간 공학적 상한 비교 | 시간·횟수 상한을 함께 검사한다. HTTP 시간·오류·대기 안내 때문에 실제24회 실행이 보장되지는 않음 |
+| 업무 HTTP 동시성 | **애플리케이션 인스턴스당1** | 최신 C03 `ccc9290e-06c6-4f9c-9c76-e409eb068e4d`: c1 n=3 중503 1건으로 중단, c2/c3 n=0 | 정상 비교가 부족해 보호 상한1을 유지. 안전 상한을 실측으로 증명한 것은 아니며 여러 인스턴스 전체를1로 제한하지 않음 |
+
+### 재시도·폴링·중복 요청 중단 조건
+
+- **재시도:** 현재 GET·POST 추가0회이므로 첫 시도 이후 자동 재전송하지 않는다. GET 지원 경로를 활성화하더라도500/503 이외, 전송 오류·timeout·잘못된 대기 헤더·대기 후 다음 요청 예산 부족·스레드 중단에서는 추가 시도하지 않는다. 유효 안내를 예산에 맞춰 줄이지 않는다.
+- **자동 폴링:** clear/flagged 도달, HTTP 오류·timeout·네트워크 오류·응답 계약 불일치, 잘못된/과도한 대기 안내, 시간120초·횟수24회 상한 또는 다음 관찰 시각이 마감 이후인 경우 중단한다. 모달 닫기·로그아웃은 화면의 후속 타이머를 중단한다. pending을clear나특이사항 없음으로 바꾸지 않는다.
+- **POST 중복·결과 불명:** 같은 로컬 요청UUID는 기존 상태를 반환하고 외부 POST를 반복하지 않는다. DISPATCHING/UNKNOWN/pending은 해당 직원의 신규 생성을 차단한다. 완료 후에는 관리자 확인으로 새 조회를 허용한다. 실제 결과 불명 복구 성공률은 n=0으로 남긴다.
+
+### 실제 설정명과 반영 위치
+
+아래는[application-portal-dev.yml](../backend/src/main/resources/application-portal-dev.yml)의 현재 선택 기본값이다. 환경변수를 설정하면 해당 값이 우선하며, 사용자는 위 기본 정책을 유지했다고 확인했다. 실제 Railway 변수 목록을 별도로 내보내 감사한 것은 아니다. 키는 이 표에 포함하지 않는다.
+
+| Spring Boot 설정 | 환경변수 | 선택 기본값 |
+|---|---|---:|
+| background-check.client.connect-timeout-ms | BG_CONNECT_TIMEOUT_MS | 5000 |
+| background-check.client.request-timeout-ms | BG_REQUEST_TIMEOUT_MS | 30000 |
+| background-check.policy.max-retries | BG_MAX_RETRIES | 0 |
+| background-check.policy.retry-backoff-ms | BG_RETRY_BACKOFF_MS | 1000(현재 비활성) |
+| background-check.policy.polling-interval-ms | BG_POLLING_INTERVAL_MS | 5000 |
+| background-check.policy.polling-max-duration-ms | BG_POLLING_MAX_DURATION_MS | 120000 |
+| background-check.policy.polling-max-attempts | BG_POLLING_MAX_ATTEMPTS | 24 |
+
+전체 요청 제한은 JDK Client의 본문 수신을 포함한deadline이며 별도 socket read idle timeout이 아니다. 업무 동시성1과POST retry0은[BackgroundCheckService](../backend/src/main/java/com/bit/portal/backgroundcheck/BackgroundCheckService.java), 폴링의 서버 상한은[BackgroundCheckHistoryService](../backend/src/main/java/com/bit/portal/backgroundcheck/BackgroundCheckHistoryService.java), 화면 타이머 판단은[프론트 정책](../frontend/src/backgroundcheck/policy.js)에 반영했다. Lab의 실험 동시성·후보값은 이 업무 설정과 별도다.
 
 ## 11. 근거가 부족한 항목과 초기 구현값
 
