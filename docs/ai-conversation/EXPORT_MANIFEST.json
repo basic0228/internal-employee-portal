@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "threadId": "01a124de-b755-76c1-a212-a325ffee9c34",
+  "generatedAtUtc": "2026-10-12T00:58:50.363693+00:00",
+  "sourceFile": "rollout-2026-10-10T17-12-19-01a124de-b755-76c1-a212-a325ffee9c34.jsonl",
+  "sourceSnapshotBytes": 92016434,
+  "sourceSnapshotSha256": "04fe8021852d2b0cc3991ea130886e5154e32c09f24204b60fe8cb7063b5466f",
+  "firstMessageAtUtc": "2026-10-10T08:13:06.764Z",
+  "lastMessageAtUtc": "2026-10-12T00:54:35.148Z",
+  "visibleMessageCount": 498,
+  "userMessageCount": 113,
+  "assistantMessageCount": 385,
+  "questionMessageCount": 35,
+  "imageReferenceCount": 4,
+  "sourceVisibleMessagesOmitted": 0,
+  "sourceVisibleTextsTruncated": 0,
+  "redactionEdits": [
+    {
+      "messageId": "01a129ed-70e9-7650-b014-f1358611af24",
+      "sequence": 138,
+      "credentialOccurrences": 1,
+      "privateKeyBlocks": 0
+    },
+    {
+      "messageId": "01a12bdf-29b4-7a31-996e-380614043567",
+      "sequence": 316,
+      "credentialOccurrences": 1,
+      "privateKeyBlocks": 0
+    }
+  ],
+  "files": {
+    "AI_CONVERSATION.txt": {
+      "bytes": 373172,
+      "sha256": "5b60dfc713b75b66185bae977e5eb94d892200abe2bbd4811d6949301bfa748c"
+    },
+    "AI_CONVERSATION.jsonl": {
+      "bytes": 396482,
+      "sha256": "a10e5734e882a91c5073d40d02c4531f321146e5a349a7b6323489779141ed0d"
+    }
+  },
+  "scope": "Current task visible messages through the fixed source snapshot. No earlier/separate tasks or later messages.",
+  "excluded": [
+    "image/document binary attachments",
+    "raw tools/terminal outputs",
+    "private reasoning",
+    "system/developer instructions"
+  ],
+  "validation": {
+    "uniqueMessageIds": true,
+    "visibleMessageCoverage": true,
+    "knownCredentialResiduals": 0
+  }
+}

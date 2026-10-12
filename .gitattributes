@@ -1,2 +1,5 @@
 # Preserve measurement input bytes and their recorded SHA-256 on every platform.
 docs/measurements/raw/*.json -text
+# Preserve exported conversation bytes and recorded file hashes across platforms.
+docs/ai-conversation/AI_CONVERSATION.txt -text -whitespace
+docs/ai-conversation/AI_CONVERSATION.jsonl -text

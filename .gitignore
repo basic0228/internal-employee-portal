@@ -4,6 +4,8 @@
 **/target/
 **/node_modules/
 **/dist/
+**/__pycache__/
+*.pyc
 
 .env
 .env.*

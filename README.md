@@ -26,7 +26,8 @@
 - [설정 판단 근거](docs/API_DECISION_EVIDENCE.md): 통계·공학 모델, 후보·대안·재검토 상황
 - [DECISIONS](docs/DECISIONS.md): 사용자 확정 정책과 미확정 TODO
 - [업무 조회 정책](docs/BACKGROUND_CHECK_POLICY.md): 초기 설정, 실측 한계, 이력·중복·결과 불명·운영 적용
-- [AI_LOG](docs/AI_LOG.md): 실제 변경·오류 사례와 본인 설명 과제
+- [AI_LOG](docs/AI_LOG.md): 실제 변경·오류 사례와 본인이 어려워하는 이유
+- [전체 AI 대화 텍스트](docs/ai-conversation/AI_CONVERSATION.txt): 생성 시점까지 현재 대화498메시지, 자격증명 마스킹·범위·출처 manifest 별도 기록
 - [원본 인덱스](docs/measurements/integrated/INDEX.md): run ID·조건·원본 SHA256
 - [통합 Excel](docs/measurements/submission-evidence.xlsx): 조건별 통계·후보 계산·원본 관측
 
