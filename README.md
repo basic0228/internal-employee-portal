@@ -24,7 +24,8 @@
 
 - [MEASUREMENTS](docs/MEASUREMENTS.md): 고유39실행/65시도, 상세 GET·상태 분포·중복 POST·미검증 구분
 - [설정 판단 근거](docs/API_DECISION_EVIDENCE.md): 통계·공학 모델, 후보·대안·재검토 상황
-- [DECISIONS](docs/DECISIONS.md): 사용자 확정 정책과 미확정 TODO
+- [DECISIONS](docs/DECISIONS.md): API 실측 기반 타임아웃·재시도·폴링·중복 POST·동시성 판단
+- [업무 정책 판단](docs/BUSINESS_DECISIONS.md): 퇴사 접근·조회 실행 시점·결과 보관·본인 수정의 기존 선택
 - [업무 조회 정책](docs/BACKGROUND_CHECK_POLICY.md): 초기 설정, 실측 한계, 이력·중복·결과 불명·운영 적용
 - [AI_LOG](docs/AI_LOG.md): 실제 변경·오류 사례와 본인이 어려워하는 이유
 - [전체 AI 대화 텍스트](docs/ai-conversation/AI_CONVERSATION.txt): 생성 시점까지 현재 대화498메시지, 자격증명 마스킹·범위·출처 manifest 별도 기록

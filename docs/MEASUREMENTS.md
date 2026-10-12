@@ -64,7 +64,7 @@ runId/attemptId의 중복을 제거한 고유 39실행·65시도다. 초기 조�
 
 이력 대조 성공은 1/2쌍이다. 같은 employeeId의 POST가 외부에서 멱등 처리된다고 가정할 수 없다. 목록 차이만으로 응답 유실 POST의 생성 여부나 다른 호출자의 개입까지 증명할 수도 없다. **실제 POST timeout 뒤 원격 생성·복구 검증 n=0**이며 로컬 모의 복구 성공을 외부 성공률로 쓰지 않았다.
 
-외부 API의 재전송 안전성을 확인하지 못했으므로 POST 추가 재시도0회를 선택했다. 이표본은 외부 API가 반복 생성한 결과다. 우리앱의 중복 제어·이력 저장 검증은 포함하지 않았으며, 해당 설계는[DECISIONS](DECISIONS.md)와[업무 정책](BACKGROUND_CHECK_POLICY.md)에 기록했다.
+외부 API의 재전송 안전성을 확인하지 못했으므로 POST 추가 재시도0회를 선택했다. 이표본은 외부 API가 반복 생성한 결과다. 우리앱의 중복 제어·이력 저장 검증은 포함하지 않았다. 실측 기반 판단은[DECISIONS](DECISIONS.md), 업무 정책은[BUSINESS_DECISIONS](BUSINESS_DECISIONS.md)와[구현 정책](BACKGROUND_CHECK_POLICY.md)에 기록했다.
 
 ## 4. pending에서 최종 상태까지 걸린 시간
 
@@ -175,7 +175,7 @@ timeout8·취소2/실제65시도는2절의 클라이언트 관찰 결과로 별�
 | BG_POLLING_MAX_DURATION_MS | 120000 |
 | BG_POLLING_MAX_ATTEMPTS | 24 |
 
-선택한 외부 호출 정책의 동시성1·POST 재시도 금지는[BackgroundCheckService](../backend/src/main/java/com/bit/portal/backgroundcheck/BackgroundCheckService.java), 폴링 상한은[BackgroundCheckHistoryService](../backend/src/main/java/com/bit/portal/backgroundcheck/BackgroundCheckHistoryService.java)에 반영했다. 이값은 우리 클라이언트의 제한이며 API 제공자의 보장이나 실측 최대값을 뜻하지 않는다. 권한·업무 실행 시점·민감정보 보관 정책은[DECISIONS](DECISIONS.md)에 별도로 정리했다.
+선택한 외부 호출 정책의 동시성1·POST 재시도 금지는[BackgroundCheckService](../backend/src/main/java/com/bit/portal/backgroundcheck/BackgroundCheckService.java), 폴링 상한은[BackgroundCheckHistoryService](../backend/src/main/java/com/bit/portal/backgroundcheck/BackgroundCheckHistoryService.java)에 반영했다. 이값은 우리 클라이언트의 제한이며 API 제공자의 보장이나 실측 최대값을 뜻하지 않는다. 권한·업무 실행 시점·민감정보 보관 정책은[BUSINESS_DECISIONS](BUSINESS_DECISIONS.md)에 별도로 정리했다.
 
 근거파일: [고유 실행·원본 인덱스](measurements/integrated/INDEX.md), [통합 관측·SHA256](measurements/integrated/evidence.json), [초기 조건별 상세 분석](API_DECISION_EVIDENCE_INITIAL.md), [수학·통계·공학 모형](API_DECISION_EVIDENCE.md), [업무 관찰 증빙](measurements/business-validation.json), [시점별 기록](MEASUREMENTS_HISTORY.md), [통합 Excel](measurements/submission-evidence.xlsx).
 
